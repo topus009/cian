@@ -3,7 +3,11 @@ function sortApartments(sortType) {
     const apartments = window.APARTMENTS || [];
     const sorted = [...apartments];
     if (sortType === 'rating') {
-        sorted.sort((a, b) => (getRating(b.url) - getRating(a.url)) || (a.title.localeCompare(b.title)));
+        sorted.sort((a, b) => {
+            const orderA = getRatingSortOrder(getRating(a.url));
+            const orderB = getRatingSortOrder(getRating(b.url));
+            return orderB - orderA || (a.title.localeCompare(b.title));
+        });
     } else if (sortType === 'price') {
         sorted.sort((a, b) => (parseInt((a.price || '').replace(/\D/g, '')) || 0) - (parseInt((b.price || '').replace(/\D/g, '')) || 0));
     }
@@ -22,7 +26,7 @@ function renderList(apartmentsToRender) {
         const imgSrc = apt.img_src || (photos[0] || '');
 
         const div = document.createElement('div');
-        div.className = 'apartment';
+        div.className = 'apartment' + (isRatingClosed(rating) ? ' rating-closed' : '');
         div.id = 'apartment-' + index;
         div.dataset.url = apt.url;
 
@@ -40,8 +44,12 @@ function renderList(apartmentsToRender) {
             '<button class="rating-btn green ' + (rating === 3 ? 'active' : '') + '" data-rating="3" data-url="' + apt.url + '">👍</button>' +
             '<button class="rating-btn yellow ' + (rating === 2 ? 'active' : '') + '" data-rating="2" data-url="' + apt.url + '">😐</button>' +
             '<button class="rating-btn red ' + (rating === 1 ? 'active' : '') + '" data-rating="1" data-url="' + apt.url + '">👎</button>' +
+            '<button class="rating-btn closed ' + (rating === 4 ? 'active' : '') + '" data-rating="4" data-url="' + apt.url + '" title="Дорога закрыта">🚫</button>' +
             '</div>' +
-            '<div class="rating-info" style="color:' + getRatingColor(rating) + '">' + getRatingText(rating) + '</div>';
+            '<div class="card-footer">' +
+            '<span class="rating-info" style="color:' + getRatingColor(rating) + '">' + getRatingText(rating) + '</span>' +
+            '<a class="btn-cian-card" href="' + (apt.url || '#').replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Циан</a>' +
+            '</div>';
 
         const wrap = div.querySelector('.preview-wrap');
         if (wrap) wrap.addEventListener('click', function (e) { e.stopPropagation(); openGallery(apt, 0); });
@@ -54,13 +62,25 @@ function renderList(apartmentsToRender) {
                 div.querySelector('.rating-info').style.color = getRatingColor(r);
                 div.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                div.classList.toggle('rating-closed', isRatingClosed(r));
                 if (document.querySelector('.sort-btn.active').dataset.sort === 'rating') sortApartments('rating');
                 updateMarkerIcon(apt, r);
             });
         });
 
         div.addEventListener('click', function (e) {
-            if (e.target.closest('.preview-wrap') || e.target.closest('.rating-btn')) return;
+            if (e.target.closest('.preview-wrap') || e.target.closest('.rating-btn') || e.target.closest('.btn-cian-card')) return;
+            if (rating === 4) {
+                e.preventDefault();
+                setRating(apt.url, 0);
+                div.querySelector('.rating-info').textContent = getRatingText(0);
+                div.querySelector('.rating-info').style.color = getRatingColor(0);
+                div.querySelectorAll('.rating-btn').forEach(b => { b.classList.remove('active'); });
+                div.classList.remove('rating-closed');
+                updateMarkerIcon(apt, 0);
+                if (document.querySelector('.sort-btn.active').dataset.sort === 'rating') sortApartments('rating');
+                return;
+            }
             map.setView([apt.lat, apt.lon], 16);
             const m = markers.find(mr => mr._apt && mr._apt.url === apt.url);
             if (m) m.openPopup();

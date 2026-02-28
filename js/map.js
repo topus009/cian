@@ -3,10 +3,14 @@ let map;
 const markers = [];
 
 function createIcon(rating) {
+    const isClosed = rating === 4;
     const c = getRatingColor(rating);
+    const style = isClosed
+        ? 'background:rgba(156,163,175,0.45);width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);box-shadow:0 1px 3px rgba(0,0,0,0.2);'
+        : 'background:' + c + ';width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);';
     return L.divIcon({
-        className: 'custom-marker',
-        html: '<div style="background:' + c + ';width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+        className: 'custom-marker' + (isClosed ? ' marker-closed' : ''),
+        html: '<div style="' + style + '"></div>',
         iconSize: [22, 22], iconAnchor: [11, 11]
     });
 }
