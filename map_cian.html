@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Избранные квартиры Циан — Санкт-Петербург</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
+        #map { height: 100vh; width: calc(100% - 380px); }
+        #list {
+            width: 380px; height: 100vh; overflow-y: auto;
+            background: #f8f9fa; border-left: 1px solid #dee2e6;
+        }
+        .apartment {
+            border-bottom: 1px solid #dee2e6; padding: 12px;
+            cursor: pointer; background: #fff; margin: 8px; border-radius: 6px;
+        }
+        .apartment:hover { background: #f0f4f8; }
+        .apartment.highlighted { background: #fff3cd; border: 2px solid #ffc107; }
+        .apartment .preview-wrap { position: relative; margin-bottom: 8px; border-radius: 4px; overflow: hidden; }
+        .apartment .preview-wrap img {
+            width: 100%; height: 180px; object-fit: cover; display: block;
+        }
+        .apartment .preview-wrap::after {
+            content: "\1F50D Показать все фото"; position: absolute;
+            bottom: 0; left: 0; right: 0; padding: 6px; background: rgba(0,0,0,0.6);
+            color: #fff; font-size: 12px; text-align: center;
+        }
+        .apartment h3 { margin: 0 0 6px 0; font-size: 15px; line-height: 1.3; }
+        .apartment .price { font-weight: bold; color: #0468FF; font-size: 16px; margin-bottom: 4px; }
+        .apartment .address { color: #666; font-size: 12px; margin: 0; }
+        .apartment .metro { color: #555; font-size: 11px; margin-top: 4px; }
+        .rating-buttons { margin-top: 8px; display: flex; gap: 6px; }
+        .rating-btn { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .rating-btn.green { background: #d4edda; color: #155724; }
+        .rating-btn.green.active { background: #28a745; color: white; }
+        .rating-btn.yellow { background: #fff3cd; color: #856404; }
+        .rating-btn.yellow.active { background: #ffc107; color: #212529; }
+        .rating-btn.red { background: #f8d7da; color: #721c24; }
+        .rating-btn.red.active { background: #dc3545; color: white; }
+        .rating-info { font-size: 11px; color: #666; margin-top: 4px; }
+        .sort-controls { padding: 10px; background: #fff; border-bottom: 1px solid #dee2e6; }
+        .sort-btn { padding: 6px 12px; margin-right: 6px; border: 1px solid #dee2e6; background: #fff; cursor: pointer; border-radius: 4px; }
+        .sort-btn.active { background: #0468FF; color: white; border-color: #0468FF; }
+        .custom-marker { background: transparent; border: none; }
+        .custom-marker div { transition: transform 0.2s; }
+        .custom-marker div:hover { transform: scale(1.15); }
+
+        /* Модальное окно: фикс-хедер, 80% слайдер, справа сайдбар с описанием */
+        #gallery-modal {
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); color: #fff; flex-direction: column;
+        }
+        #gallery-modal.show { display: flex; }
+        #gallery-modal .modal-header {
+            flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
+            background: #111; border-bottom: 1px solid #333;
+        }
+        #gallery-modal .modal-title { font-size: 16px; }
+        #gallery-modal .modal-close {
+            background: #333; color: #fff; border: none; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-size: 13px;
+        }
+        #gallery-modal .modal-close:hover { background: #555; }
+        #gallery-modal .modal-body {
+            flex: 1; display: flex; min-height: 0; overflow: hidden;
+        }
+        #gallery-slider-wrap {
+            flex: 0 0 80%; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 0;
+        }
+        #gallery-slider { flex: 1; display: flex; flex-direction: column; min-height: 0; width: 100%; }
+        #gallery-slider .slider-img-wrap {
+            flex: 1; min-height: 0; width: 100%; height: 100%; position: relative;
+        }
+        #gallery-slider .slider-img-wrap img {
+            position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 0;
+        }
+        #gallery-slider .slider-nav {
+            flex-shrink: 0; display: flex; justify-content: center; gap: 10px; align-items: center; padding: 8px;
+            background: #111; border-top: 1px solid #333;
+        }
+        #gallery-slider .slider-nav button {
+            background: #333; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-size: 12px;
+        }
+        #gallery-slider .slider-counter { font-size: 12px; color: #aaa; }
+        #gallery-modal .modal-sidebar {
+            flex: 0 0 20%; min-width: 200px; max-width: 320px; padding: 12px; background: #1a1a1a; border-left: 1px solid #333;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        #gallery-modal .modal-description {
+            flex: 1; overflow-y: auto; font-size: 11px; line-height: 1.45; color: #bbb; white-space: pre-wrap; margin-bottom: 10px;
+        }
+        #gallery-modal .modal-link {
+            flex-shrink: 0; display: block; text-align: center; padding: 8px 12px; background: #0468FF; color: #fff; text-decoration: none; border-radius: 4px; font-size: 12px;
+        }
+        #gallery-modal .modal-link:hover { background: #0356d0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="list">
+        <div class="sort-controls">
+            <button class="sort-btn active" data-sort="rating">По рейтингу</button>
+            <button class="sort-btn" data-sort="price">По цене</button>
+            <button class="sort-btn" data-sort="default">По умолчанию</button>
+        </div>
+    </div>
+
+    <div id="gallery-modal">
+        <div class="modal-header">
+            <span class="modal-title" id="gallery-title"></span>
+            <button class="modal-close" id="gallery-close">Закрыть</button>
+        </div>
+        <div class="modal-body">
+            <div id="gallery-slider-wrap">
+                <div id="gallery-slider">
+                    <div class="slider-img-wrap"><img id="gallery-img" src="" alt=""></div>
+                    <div class="slider-nav">
+                        <button type="button" id="gallery-prev">← Назад</button>
+                        <span class="slider-counter" id="gallery-counter">1 / 1</span>
+                        <button type="button" id="gallery-next">Вперёд →</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-sidebar">
+                <div class="modal-description" id="gallery-description"></div>
+                <a id="gallery-link" class="modal-link" href="#" target="_blank">Открыть на Циан</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        const apartments = [{"url": "https://spb.cian.ru/sale/flat/324037941", "title": "1-комн. кв., 36 м², 14/17 этаж", "price": "7 500 000 ₽", "address": "Санкт-Петербург, р-н Калининский, Пискарёвка, Кондратьевский проспект, 70к1", "metro": ["Площадь Ленина 7 мин.", "Лесная 7 мин.", "Выборгская 8 мин."], "phone": "+7 981 174-30-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-kondratevskiy-prospekt-2734430729-4.jpg", "description": "ПО КВАРТИРЕ ПРИНЯТ ЗАЛОГ ДО 20.03.2026\n\nПродам от собственника однокомнатную  квартиру в новом доме\n\nДом кирпично-монолитный, построен крупным застройщиком Сэтл Сити\n\nВ парадную 2 входа, два лифта - грузовой и грузо-пассажирский\n\nКвартира отличной планировки - большая комната 18 кв м, кухня квадратная 9,2 кв м, совмещенный санузел\n\nЛоджия застеклена зимним остеклением\n\nКвартира будет передаваться покупателю без мебели и техники\n\nФото пустой квартиры сгенерировано ИИ\n\nПрямая продажа, никто не про", "photos": ["data/favorite_files/kvartira-sanktpeterburg-kondratevskiy-prospekt-2734430729-4.jpg"], "lat": 59.9838051, "lon": 30.3963499}, {"url": "https://spb.cian.ru/sale/flat/318299720", "title": "1-комн. кв., 41,10 м², 4/16 этаж", "price": "7 000 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Сосновая поляна, улица Пионерстроя, 21к1", "metro": ["Проспект Ветеранов 12 мин.", "Юго-Западная 10 мин.", "Ленинский проспект 12 мин."], "phone": "+7 981 847-60-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-ulica-pionerstroya-2510504992-4.jpg", "description": "В продаже однокомнатная квартира, расположенная на 4-ом этаже 16-ти этажного многоквартирного жилого дома 2006 года постройки.\n\nОбщая площадь без учёта лоджии составляет 41,1 кв.м. Вместительная комната 19,6 кв.м, удобная кладовая, просторная кухня 11,6 кв.м, совмещённый сан.узел.\nУдобное расположение квартиры на этаже. Хорошие дружелюбные соседи. Окна квартиры выходят на западную сторону в зелёный двор, где есть детская площадка. Рядом с домом протекает речка Сосновка. \n\nВблизи дома вся нужная ", "photos": ["data/favorite_files/kvartira-sanktpeterburg-ulica-pionerstroya-2510504992-4.jpg"], "lat": 59.8405856, "lon": 30.1293485}, {"url": "https://spb.cian.ru/sale/flat/327223831", "title": "1-комн. кв., 38,80 м², 9/15 этаж", "price": "6 750 000 ₽", "address": "Санкт-Петербург, р-н Кировский, Дачное, улица Лени Голикова, 2", "metro": ["Проспект Ветеранов 18 мин.", "Юго-Западная 21 мин.", "Ленинский проспект 4 мин."], "phone": "+7 981 251-25-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-ulica-leni-golikova-2815067844-4.jpg", "description": "Продается однокомнатная квартира с отличной планировкой!\n о квартире\nОбщая площадь квартиры составляет 38.8 кв. м с учетом лоджии, бел лоджии 32,6м, жилая площадь — 15 кв. м. кухня правильной прямоуголной  формы — 8.3 кв. Окна вызодят во двор.\n о доме.\n Квариира расположенна в кирпичном доме на 9 этаже из 15. . м. Дом построен в 1983 году и находится в хорошем состоянии. В доме два  пассажирских лифта и один грузовой.\n о локации\nВ шаговой доступности находятся школы, детские сады, клиники и мага", "photos": ["data/favorite_files/kvartira-sanktpeterburg-ulica-leni-golikova-2815067844-4.jpg"], "lat": 59.8498888, "lon": 30.2294727}, {"url": "https://spb.cian.ru/sale/flat/325693390", "title": "1-комн. кв., 36,70 м², 5/18 этаж", "price": "7 100 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Юго-Запад, Петергофское шоссе, 3К5", "metro": ["Ленинский проспект 6 мин.", "Юго-Западная 24 мин.", "Проспект Ветеранов 7 мин."], "phone": "+7 911 842-17-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-petergofskoe-shosse-2768000737-4.jpg", "description": "Уютная и Светлая квартира в кирпичном доме. Общая 36,7 м , большая комната 18,6 , большой балкон , по форме буква - Г. В квартире раздельный санузел и есть кладовка . По вашему желанию , мебель вся остается .  Магазин Пловдив и другие , в шаговой доступности . Остановка трамвая 5 мин. пешком. До метро Автово 10 мин . транспортом . \nОдин взрослый собственник , никто не прописан , Прямая продажа ! Квартира свободна , показ в любое время . Звоните , будем рады , договоримся о времени встречи.", "photos": ["data/favorite_files/kvartira-sanktpeterburg-petergofskoe-shosse-2768000737-4.jpg"], "lat": 59.8479297, "lon": 30.2065138}, {"url": "https://spb.cian.ru/sale/flat/326443301", "title": "1-комн. кв., 35,40 м², 16/16 этаж", "price": "7 400 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Южно-Приморский, Ленинский проспект, 78к1", "metro": ["Юго-Западная 5 мин.", "Ленинский проспект 7 мин.", "Проспект Ветеранов 8 мин."], "phone": "+7 981 846-89-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-leninskiy-prospekt-2804614233-4.jpg", "description": "СРОЧНАЯ ПРОДАЖА! Уютная и просторная 1-комнатная квартира 35.4 м²\n Адрес: Санкт-Петербург, Ленинский проспект, дом 78, корпус 1, квартира 122\n Кадастровая стоимость: 7 366 005,78 рублей \n Прямая продажа, без обременений, один зарегистрированный собственник, в собственности более 10 лет, приобреталась по нотариальному договору купли-продажи\n\n Главные преимущества:\n•\tПоследний этаж (16/16) — никаких соседей сверху, отличный вид из окон и балкона!\nОтличная инфраструктура и транспортная доступность ", "photos": ["data/favorite_files/kvartira-sanktpeterburg-leninskiy-prospekt-2804614233-4.jpg"], "lat": 59.8616492, "lon": 30.1903772}, {"url": "https://spb.cian.ru/sale/flat/326241572", "title": "1-комн. кв., 36 м², 14/23 этаж", "price": "7 500 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Южно-Приморский, Ленинский проспект, 78к1", "metro": ["Юго-Западная 5 мин.", "Ленинский проспект 7 мин.", "Проспект Ветеранов 8 мин."], "phone": "+7 911 179-26-…", "img_src": "data/favorite_files/2785904443-4.jpg", "description": "Код объекта: 2014239.\nБольшая однокомнатная квартира.\n\nО КВАРТИРЕ:\n*Квартира с черновой отделкой!\n\n-Общая площадь 36 м2 ;\n-Просторный коридор 4 м2;\n\n\nО ДОМЕ:\n\n-По всему периметру дома есть видеонаблюдение;\n-Во дворе есть детская площадка; -Около дома много парковочных мест;\n\nИНФРАСТРУКТУРА:\n\n-Через дорогу от дома есть большая Гипер Лента;\n-В 5-ти минутах находятся \"Пятерочка\", \"Красное Белое\", \"Вкус Вилл\";\n-В 7-ми минутах находятся салоны красоты, фитнес залы, спа центры;\n-В 7-ми минутах находит", "photos": ["data/favorite_files/2785904443-4.jpg"], "lat": 59.8576492, "lon": 30.1903772}, {"url": "https://spb.cian.ru/sale/flat/327099185", "title": "1-комн. кв., 38,80 м², 5/15 этаж", "price": "7 150 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Южно-Приморский, улица Маршала Захарова, 12к2", "metro": ["Юго-Западная 8 мин.", "Ленинский проспект 10 мин.", "Проспект Ветеранов 11 мин."], "phone": "+7 981 840-20-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-ulica-marshala-zaharova-2811469036-4.jpg", "description": "Агентов просьба не беспокоить. Продается уютная однокомнатная квартира с косметическим ремонтом. Дом панельного типа, построенный в 2010 году, расположена на 5 этаже 14-этажного здания. Из окон открывается вид на солнечную сторону, во двор, что обеспечивает хорошее естественное освещение.\nВ квартире раздельный санузел, есть балкон, который станет отличным местом для отдыха. В доме предусмотрен мусоропровод, а также пассажирский и грузовой лифты. Во дворе оборудована спортивная площадка, а также ", "photos": ["data/favorite_files/kvartira-sanktpeterburg-ulica-marshala-zaharova-2811469036-4.jpg"], "lat": 59.8588702, "lon": 30.1628266}, {"url": "https://spb.cian.ru/sale/flat/326422137", "title": "1-комн. кв., 38,60 м², 7/14 этаж", "price": "7 200 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Южно-Приморский, улица Маршала Захарова, 12к1", "metro": ["Юго-Западная 8 мин.", "Ленинский проспект 10 мин.", "Проспект Ветеранов 11 мин."], "phone": "+7 981 796-08-…", "img_src": "data/favorite_files/2791457305-4.jpg", "description": "Номер объявления: 21159 - назовите его оператору. Предлагается 1-комнатная квартира рядом с заливом!\nСовременный район рядом с метро \"Юго-западная\".\n\nРядом много магазинов, торговых центров, поликлиник, детских садов, школ, МФЦ, Сбербанк, все необходимое для жизни.\nТакже всегда можно насладиться пейзажами и прогулками вдоль залива и отдохнуть на пляже.\n\nДом монолитный 2010 года постройки. Квартира расположена на 7 этаже.\nВысота потолков 2.65м. Окна выходят во двор. Комната 19.9 м кв, кухня 10.6 ", "photos": ["data/favorite_files/2791457305-4.jpg"], "lat": 59.8597565, "lon": 30.1590993}, {"url": "https://spb.cian.ru/sale/flat/318354712", "title": "3-комн. кв., 64 м², 5/9 этаж", "price": "8 850 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Южно-Приморский, Петергофское шоссе, 21К1", "metro": ["Ленинский проспект 8 мин.", "Юго-Западная 6 мин.", "Проспект Ветеранов 9 мин."], "phone": "+7 911 722-54-…", "img_src": "data/favorite_files/2512018748-4.jpg", "description": "К вашему вниманию просторная 3-к квартира с большой площадью где может расположиться большая семья.\n\nСделан хороший качественный ремонт\nУдобный пятый этаж \n Наличие балкона добавляет дополнительное пространство для отдыха и возможность наслаждаться видами на тихий двор и улицу.\n\nЧиcтaя, уxoжeннaя пaрадная. \n\nРасположение дома идеально подходит как для активной городской жизни, так и для отдыха на свежем воздухе благодаря близости парка, где можно совершать прогулки и заниматься спортом. \nДля дет", "photos": ["data/favorite_files/2512018748-4.jpg"], "lat": 59.8477122, "lon": 30.1786368}, {"url": "https://spb.cian.ru/sale/flat/319244695", "title": "2-комн. кв., 43,90 м², 7/16 этаж", "price": "8 570 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Южно-Приморский, Брестский бульвар, 13", "metro": ["Ленинский проспект 7 мин.", "Юго-Западная 5 мин.", "Проспект Ветеранов 8 мин."], "phone": "+7 981 280-13-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-brestskiy-bulvar-2545071203-4.jpg", "description": "Продается уютная квартира  расположенная в кирпичном доме 1981 года постройки, полная реконструкция 2004 года. \nВ квартире выполнен косметический ремонт, что позволяет сразу въехать в квартиру. В планировке  две лоджии, комната с двумя окнами, есть просторный тамбур на две квартиры. \nВ доме есть консьерж, два лифта. \nРайон развитый и удобный для жизни — в шаговой доступности находятся школы, детские сады и магазины, рынок, жилконторв, паспортный стол, Сбербанк, в доме нотариус. \nВ квартире выпол", "photos": ["data/favorite_files/kvartira-sanktpeterburg-brestskiy-bulvar-2545071203-4.jpg"], "lat": 59.8526649, "lon": 30.1952635}, {"url": "https://spb.cian.ru/sale/flat/309348181", "title": "1-комн. кв., 41,50 м², 9/19 этаж", "price": "9 350 000 ₽", "address": "Санкт-Петербург, р-н Московский, Пулковский меридиан, 5-й Предпортовый проезд, 8к1", "metro": ["Московская 22 мин.", "Ленинский проспект 6 мин.", "Звездная 6 мин."], "phone": "+7 911 847-45-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-5y-predportovyy-proezd-2312147247-4.jpg", "description": "доступная  инфраструктура ,через дорогу есть платная паркова,до метро 15 минут пешком во дворе есть школа,закрытая лестничная клетка,удачный вид из окна вдаль\nпри покупке вся мебель остаётся в квартире \nпросьба Агентам не тревожить", "photos": ["data/favorite_files/kvartira-sanktpeterburg-5y-predportovyy-proezd-2312147247-4.jpg"], "lat": 59.8361185, "lon": 30.3116083}, {"url": "https://spb.cian.ru/sale/flat/324570692", "title": "2-комн. кв., 57,70 м², 4/5 этаж", "price": "7 900 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Урицк, улица Добровольцев, 52", "metro": ["Проспект Ветеранов 11 мин.", "Юго-Западная 9 мин.", "Ленинский проспект 11 мин."], "phone": "+7 981 112-82-…", "img_src": "data/favorite_files/2721644779-4.jpg", "description": "342212 Красносельский р-н,Санкт-Петербурга ул Добровольцев 57.Продается 2х кв ,4/5 панельного дома 1971 года постройки.Состояние кв. хорошие,квартира очень теплая, светлая,окна выходят на две стороны Тихий двор.Удален от проезжей части.Район с  развитой  инфраструктурой и отличным транспортным сообщением, рядом м.Ветеранов,жд.станция Лигово. Один взрослый собственник.без обременений .Возможен торг.", "photos": ["data/favorite_files/2721644779-4.jpg"], "lat": 59.828582, "lon": 30.1685249}, {"url": "https://spb.cian.ru/sale/flat/321967523", "title": "1-комн. кв., 42,70 м², 3/14 этаж", "price": "7 400 000 ₽", "address": "Санкт-Петербург, р-н Калининский, Северный, проспект Просвещения, 68К1", "metro": ["Гражданский проспект 5 мин.", "Проспект Просвещения 6 мин.", "Политехническая 7 мин."], "phone": "+7 911 991-30-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-prospekt-prosveshceniya-2656051878-4.jpg", "description": "Продается уютная однокомнатная квартира в Санкт-Петербурге, расположенная по адресу: проспект Просвещения, 68к1. Общая площадь квартиры составляет 42.7 кв. м, жилая площадь — 22 кв. м, а кухня — 7 кв. м. Квартира многоуровневая, расположена на  3 и 4  этаж 14-этажного кирпичного дома, построенного в 1984 году. Высота потолков — 2.5 метра. Из окон открывается вид на тихий зелёный двор, что обеспечит  спокойствие и уединение.\n\nВ квартире выполнен косметический ремонт, поэтому вы сможете въехать и ", "photos": ["data/favorite_files/kvartira-sanktpeterburg-prospekt-prosveshceniya-2656051878-4.jpg"], "lat": 60.0444267, "lon": 30.3787523}, {"url": "https://spb.cian.ru/sale/flat/319580768", "title": "1-комн. кв., 37,70 м², 11/14 этаж", "price": "7 500 000 ₽", "address": "Санкт-Петербург, р-н Кировский, Дачное, улица Лени Голикова, 2", "metro": ["Проспект Ветеранов 18 мин.", "Ленинский проспект 4 мин.", "Автово 6 мин."], "phone": "+7 911 832-12-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-ulica-leni-golikova-2555659376-4.jpg", "description": "Агентам- если вы подбираете кому-то квартиру, то можем обсудить детали, если хотите предложить свои услуги по продаже данной, то нечего обсуждать, продаю сам.\n\nПродается уютная 1-комнатная квартира в тихом и развитом районе города. Общая площадь — 37.7кв.м. Квартира расположена на 11 этаже 14-этажного монолитно-кирпичного дома, что обеспечивает хорошую теплоизоляцию и звукоизоляцию.\nПланировка включает просторную гостиную, светлую спальню, современную кухню с новой техникой и уютную ванную комна", "photos": ["data/favorite_files/kvartira-sanktpeterburg-ulica-leni-golikova-2555659376-4.jpg"], "lat": 59.8458888, "lon": 30.2294727}, {"url": "https://spb.cian.ru/sale/flat/324787026", "title": "1-комн. кв., 40,70 м², 17/17 этаж", "price": "8 250 000 ₽", "address": "Санкт-Петербург, р-н Красносельский, Южно-Приморский, Ленинский проспект, 55к1", "metro": ["Ленинский проспект 9 мин.", "Юго-Западная 6 мин.", "Проспект Ветеранов 10 мин."], "phone": "+7 911 767-35-…", "img_src": "data/favorite_files/kvartira-sanktpeterburg-leninskiy-prospekt-2728583407-4.jpg", "description": "Просьба агентов не беспокоить!!!\nПросторная и уютная однокомнатная квартира общей площадью 40,7 кв.м., с качественным ремонтом, полностью готовая для проживания. С большой кухней, где стоит диван, получается как вторая комната, большой ванной комнатой и удобной вместительной гардеробной. С большим балконом, который при желании можно утеплить и использовать как дополнительную комнату. \nВ шаговой доступности вся необходимая инфраструктура для комфортного проживания: школы, детские сады, поликлиник", "photos": ["data/favorite_files/kvartira-sanktpeterburg-leninskiy-prospekt-2728583407-4.jpg"], "lat": 59.8622897, "lon": 30.1732898}];
+
+        const RATING_KEY = 'cian_apartment_ratings';
+
+        function getRating(url) {
+            const r = JSON.parse(localStorage.getItem(RATING_KEY) || '{}');
+            return r[url] || 0;
+        }
+        function setRating(url, rating) {
+            const r = JSON.parse(localStorage.getItem(RATING_KEY) || '{}');
+            r[url] = rating;
+            localStorage.setItem(RATING_KEY, JSON.stringify(r));
+        }
+        function getRatingText(r) {
+            return { 3: 'Отлично', 2: 'Хорошо', 1: 'Плохо' }[r] || 'Не оценено';
+        }
+        function getRatingColor(r) {
+            return { 3: '#28a745', 2: '#ffc107', 1: '#dc3545' }[r] || '#6c757d';
+        }
+
+        let currentGalleryApt = null;
+        let currentPhotoIdx = 0;
+
+        function openGallery(apt, photoIndex) {
+            currentGalleryApt = apt;
+            const photos = (apt.photos && apt.photos.length) ? apt.photos : (apt.img_src ? [apt.img_src] : []);
+            currentPhotoIdx = photoIndex || 0;
+            if (photos.length === 0) return;
+
+            document.getElementById('gallery-title').textContent = apt.title;
+            document.getElementById('gallery-description').textContent = apt.description || '';
+            document.getElementById('gallery-link').href = apt.url;
+            document.getElementById('gallery-modal').classList.add('show');
+            showGalleryPhoto(photos, currentPhotoIdx);
+        }
+
+        function showGalleryPhoto(photos, idx) {
+            const img = document.getElementById('gallery-img');
+            const counter = document.getElementById('gallery-counter');
+            img.src = photos[idx] || '';
+            img.alt = currentGalleryApt.title;
+            counter.textContent = (idx + 1) + ' / ' + photos.length;
+            document.getElementById('gallery-prev').style.visibility = photos.length > 1 ? 'visible' : 'hidden';
+            document.getElementById('gallery-next').style.visibility = photos.length > 1 ? 'visible' : 'hidden';
+        }
+
+        document.getElementById('gallery-close').onclick = function() {
+            document.getElementById('gallery-modal').classList.remove('show');
+        };
+        document.getElementById('gallery-modal').onclick = function(e) {
+            if (e.target.id === 'gallery-modal') document.getElementById('gallery-modal').classList.remove('show');
+        };
+        document.getElementById('gallery-prev').onclick = function() {
+            const photos = (currentGalleryApt.photos && currentGalleryApt.photos.length) ? currentGalleryApt.photos : [currentGalleryApt.img_src];
+            currentPhotoIdx = (currentPhotoIdx - 1 + photos.length) % photos.length;
+            showGalleryPhoto(photos, currentPhotoIdx);
+        };
+        document.getElementById('gallery-next').onclick = function() {
+            const photos = (currentGalleryApt.photos && currentGalleryApt.photos.length) ? currentGalleryApt.photos : [currentGalleryApt.img_src];
+            currentPhotoIdx = (currentPhotoIdx + 1) % photos.length;
+            showGalleryPhoto(photos, currentPhotoIdx);
+        };
+
+        function sortApartments(sortType) {
+            const sorted = [...apartments];
+            if (sortType === 'rating') {
+                sorted.sort((a, b) => (getRating(b.url) - getRating(a.url)) || (a.title.localeCompare(b.title)));
+            } else if (sortType === 'price') {
+                sorted.sort((a, b) => (parseInt((a.price || '').replace(/\D/g, '')) || 0) - (parseInt((b.price || '').replace(/\D/g, '')) || 0));
+            }
+            renderList(sorted);
+        }
+
+        function renderList(apartmentsToRender) {
+            const listContainer = document.getElementById('list');
+            const sortControls = listContainer.querySelector('.sort-controls');
+            listContainer.innerHTML = '';
+            listContainer.appendChild(sortControls);
+
+            apartmentsToRender.forEach((apt, index) => {
+                const rating = getRating(apt.url);
+                const photos = (apt.photos && apt.photos.length) ? apt.photos : (apt.img_src ? [apt.img_src] : []);
+                const imgSrc = apt.img_src || (photos[0] || '');
+
+                const div = document.createElement('div');
+                div.className = 'apartment';
+                div.id = 'apartment-' + index;
+                div.dataset.url = apt.url;
+
+                let imgHtml = '';
+                if (imgSrc) {
+                    imgHtml = '<div class="preview-wrap"><img src="' + imgSrc + '" alt="' + (apt.title || '').replace(/"/g, '&quot;') + '"></div>';
+                }
+
+                div.innerHTML = imgHtml +
+                    '<h3>' + (apt.title || '').replace(/</g, '&lt;') + '</h3>' +
+                    '<p class="price">' + (apt.price || '').replace(/</g, '&lt;') + '</p>' +
+                    '<p class="address">' + (apt.address || '').replace(/</g, '&lt;') + '</p>' +
+                    (apt.metro && apt.metro.length ? '<p class="metro">' + (apt.metro.join(' • ')).replace(/</g, '&lt;') + '</p>' : '') +
+                    '<div class="rating-buttons">' +
+                    '<button class="rating-btn green ' + (rating === 3 ? 'active' : '') + '" data-rating="3" data-url="' + apt.url + '">👍</button>' +
+                    '<button class="rating-btn yellow ' + (rating === 2 ? 'active' : '') + '" data-rating="2" data-url="' + apt.url + '">😐</button>' +
+                    '<button class="rating-btn red ' + (rating === 1 ? 'active' : '') + '" data-rating="1" data-url="' + apt.url + '">👎</button>' +
+                    '</div>' +
+                    '<div class="rating-info" style="color:' + getRatingColor(rating) + '">' + getRatingText(rating) + '</div>';
+
+                const wrap = div.querySelector('.preview-wrap');
+                if (wrap) wrap.addEventListener('click', function(e) { e.stopPropagation(); openGallery(apt, 0); });
+                div.querySelectorAll('.rating-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const r = parseInt(btn.dataset.rating);
+                        setRating(apt.url, r);
+                        div.querySelector('.rating-info').textContent = getRatingText(r);
+                        div.querySelector('.rating-info').style.color = getRatingColor(r);
+                        div.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        if (document.querySelector('.sort-btn.active').dataset.sort === 'rating') sortApartments('rating');
+                        updateMarkerIcon(apt, r);
+                    });
+                });
+
+                div.addEventListener('click', function(e) {
+                    if (e.target.closest('.preview-wrap') || e.target.closest('.rating-btn')) return;
+                    map.setView([apt.lat, apt.lon], 16);
+                    const m = markers.find(mr => mr._apt && mr._apt.url === apt.url);
+                    if (m) m.openPopup();
+                    document.querySelectorAll('.apartment').forEach(el => el.classList.remove('highlighted'));
+                    div.classList.add('highlighted');
+                    div.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+
+                listContainer.appendChild(div);
+            });
+        }
+
+        const map = L.map('map').setView([59.9343, 30.3351], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        const markers = [];
+        function createIcon(rating) {
+            const c = getRatingColor(rating);
+            return L.divIcon({
+                className: 'custom-marker',
+                html: '<div style="background:' + c + ';width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [22, 22], iconAnchor: [11, 11]
+            });
+        }
+        function updateMarkerIcon(apt, rating) {
+            const m = markers.find(mr => mr._apt && mr._apt.url === apt.url);
+            if (m) m.setIcon(createIcon(rating));
+        }
+
+        apartments.forEach((apt, index) => {
+            const rating = getRating(apt.url);
+            const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating) }).addTo(map);
+            marker._apt = apt;
+            marker.bindPopup('<b>' + (apt.title || '').replace(/</g, '&lt;') + '</b><br>' + (apt.address || '') + '<br><a href="' + apt.url + '" target="_blank">Открыть на Циан</a>');
+            marker.on('click', function() {
+                document.querySelectorAll('.apartment').forEach(el => el.classList.remove('highlighted'));
+                const el = document.querySelector('.apartment[data-url="' + apt.url.replace(/"/g, '\"') + '"]');
+                if (el) { el.classList.add('highlighted'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            });
+            markers.push(marker);
+        });
+
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                sortApartments(btn.dataset.sort);
+            });
+        });
+
+        if (apartments.length > 0) {
+            const valid = apartments.filter(a => a.lat != null && a.lon != null);
+            if (valid.length) {
+                const b = L.latLngBounds(valid.map(a => [a.lat, a.lon]));
+                map.fitBounds(b, { padding: [30, 30] });
+            }
+        }
+
+        sortApartments('rating');
+    </script>
+</body>
+</html>
