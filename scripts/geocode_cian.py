@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Геокодирование адресов из apartments.json (Nominatim или Yandex).
-Запускайте после parse_cian_favorites.py. Обновляет lat/lon в apartments.json.
+Геокодирование адресов из data/apartments.json (Nominatim или Yandex).
+Запуск: python scripts/geocode_cian.py
 Для Yandex задайте переменную окружения YANDEX_GEO_API_KEY.
 """
 import json
@@ -10,7 +10,8 @@ import re
 import time
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-JSON_PATH = os.path.join(SCRIPT_DIR, 'apartments.json')
+ROOT = os.path.dirname(SCRIPT_DIR)
+JSON_PATH = os.path.join(ROOT, 'data', 'apartments.json')
 
 try:
     import requests
@@ -20,7 +21,6 @@ except ImportError:
 
 
 def clean_address(addr):
-    """Убираем двойные запятые, лишние пробелы."""
     if not addr:
         return ""
     s = re.sub(r',+', ',', addr).strip().strip(',')
@@ -28,15 +28,12 @@ def clean_address(addr):
 
 
 def get_coords_nominatim(address: str):
-    """Геокодирование через Nominatim (OpenStreetMap). Лучше работает с коротким адресом: город, улица, дом."""
     address = clean_address(address)
     if not address:
         return None, None
-    # Сокращаем до "Санкт-Петербург, улица, дом" — Nominatim лучше находит
     parts = [p.strip() for p in address.split(',') if p.strip()]
     if len(parts) >= 3:
-        # Берём первый (город), предпоследний или последний (улица/дом)
-        short = f"{parts[0]}, {parts[-2]}, {parts[-1]}" if len(parts) >= 3 else address
+        short = f"{parts[0]}, {parts[-2]}, {parts[-1]}"
     else:
         short = address
     for q in [short, address, f"Russia, {short}"]:
@@ -49,13 +46,12 @@ def get_coords_nominatim(address: str):
             results = r.json()
             if results:
                 return float(results[0]['lat']), float(results[0]['lon'])
-        except Exception as e:
+        except Exception:
             continue
     return None, None
 
 
 def get_coords_yandex(address: str, api_key: str):
-    """Геокодирование через Yandex Geocoder API."""
     address = clean_address(address)
     if not address or not api_key:
         return None, None
@@ -108,7 +104,7 @@ def main():
 
     with open(JSON_PATH, 'w', encoding='utf-8') as f:
         json.dump(apartments, f, ensure_ascii=False, indent=2)
-    print(f"\nСохранено: {JSON_PATH}. Запустите create_map_cian.py для обновления карты.")
+    print(f"\nСохранено: {JSON_PATH}. Запустите scripts/create_map_cian.py для обновления карты.")
 
 
 if __name__ == '__main__':

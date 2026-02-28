@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Парсинг избранных объявлений Циан из сохранённой страницы data/favorite.htm.
-Извлекает: ссылка, превью, заголовок, полная цена, полный адрес (строка как на сайте),
-метро (название + время до каждого), телефон. Геокодирует полный адрес через
-Nominatim или Yandex Geocoder (если задан YANDEX_GEO_API_KEY) для координат на карте.
-Результат: apartments.json.
+Результат: data/apartments.json.
+Запуск из корня проекта: python scripts/parse_cian_favorites.py
 """
 import json
 import re
@@ -18,9 +16,11 @@ try:
 except ImportError:
     requests = None
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(SCRIPT_DIR)
+DATA_DIR = os.path.join(ROOT, 'data')
 FAVORITE_HTML = os.path.join(DATA_DIR, 'favorite.htm')
-OUT_JSON = os.path.join(os.path.dirname(__file__), 'apartments.json')
+OUT_JSON = os.path.join(DATA_DIR, 'apartments.json')
 
 
 def get_coords_nominatim(address: str):
@@ -28,7 +28,6 @@ def get_coords_nominatim(address: str):
     if not requests:
         return None, None
     try:
-        # Для российских адресов часто помогает добавление "Россия"
         q = address if address.strip().startswith(('Россия', 'Russia')) else f"Россия, {address}"
         url = 'https://nominatim.openstreetmap.org/search'
         params = {'q': q, 'format': 'json', 'limit': 1}
@@ -89,7 +88,6 @@ def parse_favorite_html(html_path: str):
         if not url.startswith('http'):
             url = 'https://' + url.lstrip('/')
 
-        # Заголовок
         title_node = card.find('div', attrs={'data-name': 'MainTitle'})
         if title_node:
             a = title_node.find('a')
@@ -97,7 +95,6 @@ def parse_favorite_html(html_path: str):
         else:
             title = 'Квартира'
 
-        # Цена (полная, как на сайте)
         price = ''
         price_block = card.find('div', attrs={'data-name': 'price_info'})
         if price_block:
@@ -105,7 +102,6 @@ def parse_favorite_html(html_path: str):
             if span:
                 price = span.get_text(strip=True).replace('\xa0', ' ')
 
-        # Превью
         img = card.find('img', alt=re.compile(r'фото|объявлен', re.I))
         if not img:
             img = card.find('div', attrs={'data-name': 'MainImage'})
@@ -118,20 +114,17 @@ def parse_favorite_html(html_path: str):
             elif img_src.startswith('favorite_files/'):
                 img_src = 'data/' + img_src
 
-        # Полный адрес и метро из geo_info (блок с классом *_29d89--geo_info, без data-name)
         geo = card.find('div', class_=re.compile(r'geo_info'))
         if not geo:
             geo = card.find('div', attrs={'data-name': 'geo_info'})
         address_full = 'Санкт-Петербург'
         metro_lines = []
         if geo:
-            # Метро: каждый div[data-name="Underground"] — название + время
             for ug in geo.find_all('div', attrs={'data-name': 'Underground'}):
                 t = ug.get_text(separator=' ', strip=True)
                 t = re.sub(r'\s+', ' ', t)
                 if t:
                     metro_lines.append(t)
-            # Адрес: в geo есть один div без data-name с адресными спанами — берём его текст
             for child in geo.find_all('div', recursive=False):
                 if child.get('data-name') == 'Underground':
                     continue
@@ -141,14 +134,12 @@ def parse_favorite_html(html_path: str):
                     address_full = re.sub(r',+', ',', addr_text).strip().strip(',')
                     break
             if address_full == 'Санкт-Петербург':
-                # запасной вариант: убрать Underground и взять весь текст из geo
                 clone = BeautifulSoup(str(geo), 'html.parser')
                 for div in clone.find_all('div', attrs={'data-name': 'Underground'}):
                     div.decompose()
                 addr_text = clone.get_text(separator=', ', strip=True)
                 address_full = re.sub(r',+', ',', re.sub(r'\s+', ' ', addr_text).strip()).strip(',').strip() or address_full
 
-        # Телефон (кнопка с номером в блоке controls)
         phone = ''
         controls = card.find('div', class_=re.compile(r'controls'))
         if controls:
@@ -162,7 +153,6 @@ def parse_favorite_html(html_path: str):
                         phone = t
                         break
 
-        # Краткое описание
         desc_node = card.find('span', attrs={'data-name': 'Description'})
         description = desc_node.get_text(strip=True)[:500] if desc_node else ''
 
@@ -190,16 +180,16 @@ def main():
     apartments = parse_favorite_html(FAVORITE_HTML)
     print(f"Найдено объявлений: {len(apartments)}")
 
-    # Координаты не заполняем здесь — запустите geocode_cian.py после парсинга
     for apt in apartments:
         apt.setdefault('lat', 59.9343)
         apt.setdefault('lon', 30.3351)
 
+    os.makedirs(DATA_DIR, exist_ok=True)
     with open(OUT_JSON, 'w', encoding='utf-8') as f:
         json.dump(apartments, f, ensure_ascii=False, indent=2)
 
     print(f"Сохранено: {OUT_JSON}")
-    print("Дальше: python geocode_cian.py — получить координаты; python create_map_cian.py — обновить карту.")
+    print("Дальше: python scripts/geocode_cian.py — координаты; python scripts/create_map_cian.py — обновить карту.")
 
 
 if __name__ == '__main__':

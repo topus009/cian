@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Парсит вручную сохранённые HTML страницы объявлений Циан из папки data/offers/.
-Ожидаемые имена файлов: offer_<ID>.html или <ID>.html (ID = число из URL spb.cian.ru/sale/flat/ID).
-Обновляет apartments.json: подставляет все фото и полное описание для каждой квартиры.
-После запуска выполните: python create_map_cian.py
+Парсит вручную сохранённые HTML страницы объявлений из data/offers/.
+Обновляет data/apartments.json: фото и описание. После запуска: python scripts/create_map_cian.py
 """
 import json
 import os
@@ -12,8 +10,9 @@ import re
 from bs4 import BeautifulSoup
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-JSON_PATH = os.path.join(SCRIPT_DIR, 'apartments.json')
-OFFERS_DIR = os.path.join(SCRIPT_DIR, 'data', 'offers')
+ROOT = os.path.dirname(SCRIPT_DIR)
+JSON_PATH = os.path.join(ROOT, 'data', 'apartments.json')
+OFFERS_DIR = os.path.join(ROOT, 'data', 'offers')
 
 
 def extract_from_html(html: str, base_path: str):
@@ -22,7 +21,6 @@ def extract_from_html(html: str, base_path: str):
     photos = []
     description = ''
 
-    # Локальные картинки (сохранённые рядом: *_files/*.jpg)
     for img in soup.find_all('img'):
         src = img.get('src') or img.get('data-src')
         if not src:
@@ -31,19 +29,17 @@ def extract_from_html(html: str, base_path: str):
             if src.startswith('http'):
                 photos.append(src)
             else:
-                # Относительный путь → от корня проекта: data/offers/... или data/offers/*_files/...
                 if '_files' in src or 'files' in src:
                     parts = src.replace('\\', '/').split('/')
                     if parts[0] in ('.', '..'):
                         path = os.path.normpath(os.path.join(base_path, *parts))
                     else:
                         path = os.path.normpath(os.path.join(base_path, src))
-                    rel = os.path.relpath(path, SCRIPT_DIR).replace('\\', '/')
+                    rel = os.path.relpath(path, ROOT).replace('\\', '/')
                     photos.append(rel)
                 else:
                     photos.append(src)
 
-    # Описание
     for el in soup.find_all(attrs={'data-name': re.compile(r'description|Description')}):
         description += el.get_text(separator='\n', strip=True) + '\n'
     for el in soup.find_all(attrs={'itemprop': 'description'}):
@@ -54,7 +50,6 @@ def extract_from_html(html: str, base_path: str):
             if len(t) > 100:
                 description += t + '\n'
 
-    # Уникальные фото
     seen = set()
     unique = []
     for p in photos:
@@ -62,7 +57,6 @@ def extract_from_html(html: str, base_path: str):
         if key not in seen:
             seen.add(key)
             unique.append(p)
-
     return unique[:50], description.strip()
 
 
@@ -91,8 +85,6 @@ def main():
 
     if not files:
         print(f"В папке {OFFERS_DIR} нет HTML файлов объявлений.")
-        print("Сохраните страницы с Циан (Файл → Сохранить как → «Веб-страница, полностью»).")
-        print("Имена: offer_324037941.html или 324037941.html (ID из ссылки).")
         return
 
     updated = 0
@@ -114,7 +106,7 @@ def main():
             apt['description'] = desc[:3000]
     with open(JSON_PATH, 'w', encoding='utf-8') as f:
         json.dump(apartments, f, ensure_ascii=False, indent=2)
-    print(f"Обновлено квартир: {updated}. Запустите create_map_cian.py для обновления карты.")
+    print(f"Обновлено квартир: {updated}. Запустите scripts/create_map_cian.py.")
 
 
 if __name__ == '__main__':
