@@ -1,0 +1,47 @@
+/* Модальное окно галереи фото */
+#gallery-modal {
+    display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95); color: #fff; flex-direction: column;
+}
+#gallery-modal.show { display: flex; }
+#gallery-modal .modal-header {
+    flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
+    background: #111; border-bottom: 1px solid #333;
+}
+#gallery-modal .modal-title { font-size: 16px; }
+#gallery-modal .modal-close {
+    background: #333; color: #fff; border: none; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-size: 13px;
+}
+#gallery-modal .modal-close:hover { background: #555; }
+#gallery-modal .modal-body {
+    flex: 1; display: flex; min-height: 0; overflow: hidden;
+}
+#gallery-slider-wrap {
+    flex: 0 0 80%; display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 0;
+}
+#gallery-slider { flex: 1; display: flex; flex-direction: column; min-height: 0; width: 100%; }
+#gallery-slider .slider-img-wrap {
+    flex: 1; min-height: 0; width: 100%; height: 100%; position: relative;
+}
+#gallery-slider .slider-img-wrap img {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 0;
+}
+#gallery-slider .slider-nav {
+    flex-shrink: 0; display: flex; justify-content: center; gap: 10px; align-items: center; padding: 8px;
+    background: #111; border-top: 1px solid #333;
+}
+#gallery-slider .slider-nav button {
+    background: #333; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-size: 12px;
+}
+#gallery-slider .slider-counter { font-size: 12px; color: #aaa; }
+#gallery-modal .modal-sidebar {
+    flex: 0 0 20%; min-width: 200px; max-width: 320px; padding: 12px; background: #1a1a1a; border-left: 1px solid #333;
+    display: flex; flex-direction: column; overflow: hidden;
+}
+#gallery-modal .modal-description {
+    flex: 1; overflow-y: auto; font-size: 11px; line-height: 1.45; color: #bbb; white-space: pre-wrap; margin-bottom: 10px;
+}
+#gallery-modal .modal-link {
+    flex-shrink: 0; display: block; text-align: center; padding: 8px 12px; background: #0468FF; color: #fff; text-decoration: none; border-radius: 4px; font-size: 12px;
+}
+#gallery-modal .modal-link:hover { background: #0356d0; }

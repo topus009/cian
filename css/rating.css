@@ -1,0 +1,20 @@
+/* Рейтинги, кнопка Циан, «Дорога закрыта» */
+.rating-buttons { margin-top: 8px; display: flex; gap: 6px; }
+.rating-btn { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.rating-btn.green { background: #d4edda; color: #155724; }
+.rating-btn.green.active { background: #28a745; color: white; }
+.rating-btn.yellow { background: #fff3cd; color: #856404; }
+.rating-btn.yellow.active { background: #ffc107; color: #212529; }
+.rating-btn.red { background: #f8d7da; color: #721c24; }
+.rating-btn.red.active { background: #dc3545; color: white; }
+.rating-btn.closed { background: #e5e7eb; color: #6b7280; }
+.rating-btn.closed.active { background: #9ca3af; color: #fff; }
+.rating-info { font-size: 11px; color: #666; }
+.card-footer { margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.btn-cian-card {
+    flex-shrink: 0; font-size: 11px; padding: 3px 8px; color: #fff; background: #0468FF;
+    text-decoration: none; border-radius: 4px; white-space: nowrap;
+}
+.btn-cian-card:hover { background: #0356d0; color: #fff; }
+.apartment.rating-closed { filter: blur(2px); opacity: 0.72; }
+.apartment.rating-closed:hover { filter: blur(1px); opacity: 0.85; }

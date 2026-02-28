@@ -1,0 +1,20 @@
+/* Карточки квартир в сайдбаре */
+.apartment {
+    border-bottom: 1px solid #dee2e6; padding: 12px;
+    cursor: pointer; background: #fff; margin: 8px; border-radius: 6px;
+}
+.apartment:hover { background: #f0f4f8; }
+.apartment.highlighted { background: #fff3cd; border: 2px solid #ffc107; }
+.apartment .preview-wrap { position: relative; margin-bottom: 8px; border-radius: 4px; overflow: hidden; }
+.apartment .preview-wrap img {
+    width: 100%; height: 180px; object-fit: cover; display: block;
+}
+.apartment .preview-wrap::after {
+    content: "🔍 Показать все фото"; position: absolute;
+    bottom: 0; left: 0; right: 0; padding: 6px; background: rgba(0,0,0,0.6);
+    color: #fff; font-size: 12px; text-align: center;
+}
+.apartment h3 { margin: 0 0 6px 0; font-size: 15px; line-height: 1.3; }
+.apartment .price { font-weight: bold; color: #0468FF; font-size: 16px; margin-bottom: 4px; }
+.apartment .address { color: #666; font-size: 12px; margin: 0; }
+.apartment .metro { color: #555; font-size: 11px; margin-top: 4px; }
