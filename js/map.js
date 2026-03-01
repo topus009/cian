@@ -30,7 +30,12 @@ function initMap(apartments) {
         const rating = getRating(apt.url);
         const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating) }).addTo(map);
         marker._apt = apt;
-        marker.bindPopup('<b>' + (apt.title || '').replace(/</g, '&lt;') + '</b><br>' + (apt.address || '') + '<br><a href="' + apt.url + '" target="_blank">Открыть на Циан</a>');
+        const aptId = (apt.url || '').match(/\/(\d+)\/?$/);
+        const code = aptId ? aptId[1] : '';
+        const area = apt.total_area ? apt.total_area + ' м²' : '';
+        const price = (apt.price || '').replace(/</g, '&lt;');
+        const parts = [code ? 'Код ' + code : '', area, price].filter(Boolean);
+        marker.bindPopup(parts.join(' · '));
         marker.on('click', function () {
             document.querySelectorAll('.apartment').forEach(el => el.classList.remove('highlighted'));
             const el = document.querySelector('.apartment[data-url="' + apt.url.replace(/"/g, '\\"') + '"]');
