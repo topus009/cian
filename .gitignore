@@ -1,3 +1,13 @@
-# Игнорируем всё содержимое data/, кроме apartments.js (он нужен для GitHub Pages)
+# data/ для GitHub Pages: только apartments.js и картинки JPG (чтобы не пушить лишнее)
 /data/*
 !/data/apartments.js
+!/data/*_files/
+/data/*_files/*
+!/data/*_files/*.jpg
+!/data/*_files/*.jpeg
+!/data/static_2/
+/data/static_2/*
+!/data/static_2/*_files/
+/data/static_2/*_files/*
+!/data/static_2/*_files/*.jpg
+!/data/static_2/*_files/*.jpeg
