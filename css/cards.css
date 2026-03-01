@@ -2,6 +2,14 @@
 .apartment {
     border-bottom: 1px solid #dee2e6; padding: 12px;
     cursor: pointer; background: #fff; margin: 8px; border-radius: 6px;
+    position: relative;
+}
+.apartment .card-index {
+    display: inline-block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+    font-weight: 600;
 }
 .apartment:hover { background: #f0f4f8; }
 .apartment.highlighted { background: #fff3cd; border: 2px solid #ffc107; }

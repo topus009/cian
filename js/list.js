@@ -20,6 +20,7 @@ function renderList(apartmentsToRender) {
     listContainer.innerHTML = '';
     listContainer.appendChild(sortControls);
 
+    const total = apartmentsToRender.length;
     apartmentsToRender.forEach((apt, index) => {
         const rating = getRating(apt.url);
         const photos = (apt.photos && apt.photos.length) ? apt.photos : (apt.img_src ? [apt.img_src] : []);
@@ -35,7 +36,9 @@ function renderList(apartmentsToRender) {
             imgHtml = '<div class="preview-wrap"><img src="' + imgSrc + '" alt="' + (apt.title || '').replace(/"/g, '&quot;') + '"></div>';
         }
 
-        div.innerHTML = imgHtml +
+        const num = index + 1;
+        div.innerHTML = '<span class="card-index">' + num + ' из ' + total + '</span>' +
+            imgHtml +
             '<h3>' + (apt.title || '').replace(/</g, '&lt;') + '</h3>' +
             '<p class="price">' + (apt.price || '').replace(/</g, '&lt;') + '</p>' +
             '<p class="address">' + (apt.address || '').replace(/</g, '&lt;') + '</p>' +
