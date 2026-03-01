@@ -11,3 +11,9 @@
 /data/static_2/*_files/*
 !/data/static_2/*_files/*.jpg
 !/data/static_2/*_files/*.jpeg
+!/data/static_3/
+/data/static_3/*
+!/data/static_3/*_files/
+/data/static_3/*_files/*
+!/data/static_3/*_files/*.jpg
+!/data/static_3/*_files/*.jpeg
