@@ -23,9 +23,33 @@
             </div>
         </div>
         <div class="sort-controls">
-            <button class="sort-btn active" data-sort="rating">По рейтингу</button>
-            <button class="sort-btn" data-sort="price">По цене</button>
-            <button class="sort-btn" data-sort="default">По умолчанию</button>
+            <label for="list-sort-select" class="sort-label">Сортировка:</label>
+            <select id="list-sort-select" class="sort-select">
+                <optgroup label="Рейтинг">
+                    <option value="rating-desc">По рейтингу (лучшие сверху)</option>
+                    <option value="rating-asc">По рейтингу (худшие сверху)</option>
+                </optgroup>
+                <optgroup label="Цена">
+                    <option value="price-asc">По цене (дешевле сначала)</option>
+                    <option value="price-desc">По цене (дороже сначала)</option>
+                </optgroup>
+                <optgroup label="Цена за м²">
+                    <option value="price_per_sqm-asc">По цене за м² (дешевле)</option>
+                    <option value="price_per_sqm-desc">По цене за м² (дороже)</option>
+                </optgroup>
+                <optgroup label="Площадь">
+                    <option value="area-asc">По площади (меньше сначала)</option>
+                    <option value="area-desc">По площади (больше сначала)</option>
+                </optgroup>
+                <optgroup label="Год постройки">
+                    <option value="build_year-asc">По году (старые сначала)</option>
+                    <option value="build_year-desc">По году (новые сначала)</option>
+                </optgroup>
+                <optgroup label="Комнаты">
+                    <option value="rooms-asc">По кол-ву комнат (меньше сначала)</option>
+                    <option value="rooms-desc">По кол-ву комнат (больше сначала)</option>
+                </optgroup>
+            </select>
         </div>
         <div class="list-cards" id="list-cards"></div>
     </div>

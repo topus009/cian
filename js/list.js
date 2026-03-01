@@ -17,6 +17,15 @@ function formatTitleRooms(apt) {
     return apt.title || 'Квартира';
 }
 
+function getRoomsCount(apt) {
+    const t = (apt.title || '').toLowerCase();
+    if (/1-комн|1-комнатн|однокомнатн/.test(t)) return 1;
+    if (/2-комн|2-комнатн|двухкомнатн|двух комн/.test(t)) return 2;
+    if (/3-комн|3-комнатн|трёхкомнатн|трехкомнатн/.test(t)) return 3;
+    if (/4-комн|4-комнатн|многокомнатн/.test(t)) return 4;
+    return 0;
+}
+
 function getCardSearchText(apt) {
     const year = getBuildYear(apt);
     const area = apt.total_area ? apt.total_area + ' м²' : '';
@@ -30,17 +39,55 @@ function formatPricePerSqm(value) {
     return n.toLocaleString('ru-RU') + ' ₽/м²';
 }
 
-function sortApartments(sortType) {
-    const apartments = window.APARTMENTS || [];
-    const sorted = [...apartments];
-    if (sortType === 'rating') {
-        sorted.sort((a, b) => {
-            const orderA = getRatingSortOrder(getRating(a.url));
-            const orderB = getRatingSortOrder(getRating(b.url));
-            return orderB - orderA || (a.title || '').localeCompare(b.title || '');
+function sortApartments(sortValue) {
+    var parts = (sortValue || 'rating-desc').split('-');
+    var field = parts[0];
+    var dir = parts[1] === 'asc' ? 1 : -1;
+    var apartments = window.APARTMENTS || [];
+    var sorted = apartments.slice();
+
+    function num(a, b, getVal) {
+        var va = getVal(a);
+        var vb = getVal(b);
+        if (va < vb) return -1 * dir;
+        if (va > vb) return 1 * dir;
+        return 0;
+    }
+    function str(a, b, getVal) {
+        var va = (getVal(a) || '').toString();
+        var vb = (getVal(b) || '').toString();
+        var c = va.localeCompare(vb);
+        return c * dir;
+    }
+
+    if (field === 'rating') {
+        sorted.sort(function (a, b) {
+            var oa = getRatingSortOrder(getRating(a.url));
+            var ob = getRatingSortOrder(getRating(b.url));
+            return (ob - oa) * dir || (a.title || '').localeCompare(b.title || '');
         });
-    } else if (sortType === 'price') {
-        sorted.sort((a, b) => (parseInt((a.price || '').replace(/\D/g, '')) || 0) - (parseInt((b.price || '').replace(/\D/g, '')) || 0));
+    } else if (field === 'price') {
+        sorted.sort(function (a, b) {
+            return num(a, b, function (x) { return parseInt((x.price || '').replace(/\D/g, ''), 10) || 0; });
+        });
+    } else if (field === 'price_per_sqm') {
+        sorted.sort(function (a, b) {
+            return num(a, b, function (x) { return (x.price_per_sqm != null ? Number(x.price_per_sqm) : 0); });
+        });
+    } else if (field === 'area') {
+        sorted.sort(function (a, b) {
+            return num(a, b, function (x) { return (x.total_area != null ? parseFloat(String(x.total_area).replace(',', '.'), 10) : 0); });
+        });
+    } else if (field === 'build_year') {
+        sorted.sort(function (a, b) {
+            var ya = parseInt(getBuildYear(a), 10) || 0;
+            var yb = parseInt(getBuildYear(b), 10) || 0;
+            return (ya - yb) * dir || (a.title || '').localeCompare(b.title || '');
+        });
+    } else if (field === 'rooms') {
+        sorted.sort(function (a, b) {
+            return num(a, b, getRoomsCount) || (a.title || '').localeCompare(b.title || '');
+        });
     }
     applyListFilter(sorted);
 }
@@ -114,7 +161,8 @@ function renderList(apartmentsToRender, totalCount) {
                 div.querySelectorAll('.rating-btn').forEach(function (b) { b.classList.remove('active'); });
                 btn.classList.add('active');
                 div.classList.toggle('rating-closed', isRatingClosed(r));
-                if (document.querySelector('.sort-btn.active').dataset.sort === 'rating') sortApartments('rating');
+                var sel = document.getElementById('list-sort-select');
+                if (sel && sel.value.indexOf('rating') === 0) sortApartments(sel.value);
                 else applyListFilter(window._lastSortedApartments || []);
                 updateMarkerIcon(apt, r);
             });
@@ -130,7 +178,8 @@ function renderList(apartmentsToRender, totalCount) {
                 div.querySelectorAll('.rating-btn').forEach(function (b) { b.classList.remove('active'); });
                 div.classList.remove('rating-closed');
                 updateMarkerIcon(apt, 0);
-                if (document.querySelector('.sort-btn.active').dataset.sort === 'rating') sortApartments('rating');
+                var sel = document.getElementById('list-sort-select');
+                if (sel && sel.value.indexOf('rating') === 0) sortApartments(sel.value);
                 else applyListFilter(window._lastSortedApartments || []);
                 return;
             }
@@ -166,13 +215,12 @@ function initList() {
         });
     }
 
-    document.querySelectorAll('.sort-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.sort-btn').forEach(function (b) { b.classList.remove('active'); });
-            btn.classList.add('active');
-            sortApartments(btn.dataset.sort);
+    var sortSelect = document.getElementById('list-sort-select');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function () {
+            sortApartments(sortSelect.value);
         });
-    });
+    }
 
-    sortApartments('rating');
+    sortApartments(sortSelect ? sortSelect.value : 'rating-desc');
 }

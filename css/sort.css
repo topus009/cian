@@ -1,4 +1,31 @@
 /* Панель сортировки в сайдбаре */
-.sort-controls { padding: 10px; background: #fff; border-bottom: 1px solid #dee2e6; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sort-controls {
+    padding: 10px;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.sort-label {
+    font-size: 13px;
+    color: #333;
+    font-weight: 600;
+}
+.sort-select {
+    flex: 1;
+    min-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 13px;
+    background: #fff;
+    cursor: pointer;
+}
+.sort-select:focus {
+    outline: none;
+    border-color: #0468FF;
+}
 .sort-btn { padding: 6px 12px; margin-right: 0; border: 1px solid #dee2e6; background: #fff; cursor: pointer; border-radius: 4px; }
 .sort-btn.active { background: #0468FF; color: white; border-color: #0468FF; }
