@@ -32,22 +32,34 @@ def get_coords_nominatim(address: str):
     if not address:
         return None, None
     parts = [p.strip() for p in address.split(',') if p.strip()]
+    # Варианты запроса: город первым (Санкт-Петербург, улица, дом), потом полный, потом Russia
+    queries = []
+    if len(parts) >= 2:
+        # Санкт-Петербург, улица, номер дома (часто parts[0]=улица, parts[1]=дом)
+        street_num = f"{parts[0]}, {parts[1]}"
+        if 'Санкт-Петербург' in address:
+            queries.append(f"Санкт-Петербург, {street_num}")
+        queries.append(street_num)
     if len(parts) >= 3:
         short = f"{parts[0]}, {parts[-2]}, {parts[-1]}"
-    else:
-        short = address
-    for q in [short, address, f"Russia, {short}"]:
-        try:
-            url = 'https://nominatim.openstreetmap.org/search'
-            params = {'q': q, 'format': 'json', 'limit': 1}
-            headers = {'User-Agent': 'CianFavoritesMap/1.0 (local project)'}
-            r = requests.get(url, params=params, headers=headers, timeout=15)
-            r.raise_for_status()
-            results = r.json()
-            if results:
-                return float(results[0]['lat']), float(results[0]['lon'])
-        except Exception:
-            continue
+        queries.append(short)
+    queries.append(address)
+    for q in queries:
+        for query in [q, f"Russia, {q}", f"Saint Petersburg, {q}"]:
+            try:
+                url = 'https://nominatim.openstreetmap.org/search'
+                params = {'q': query, 'format': 'json', 'limit': 1}
+                headers = {'User-Agent': 'CianFavoritesMap/1.0 (local project)'}
+                r = requests.get(url, params=params, headers=headers, timeout=15)
+                r.raise_for_status()
+                results = r.json()
+                if results:
+                    lat, lon = float(results[0]['lat']), float(results[0]['lon'])
+                    # Проверка: результат в районе СПб (примерно)
+                    if 59.7 < lat < 60.2 and 29.5 < lon < 31.0:
+                        return lat, lon
+            except Exception:
+                continue
     return None, None
 
 
@@ -73,6 +85,10 @@ def get_coords_yandex(address: str, api_key: str):
     return None, None
 
 
+# Центр СПб — подставляем при неудачном геокодировании; по нему же определяем «не геокодированные»
+DEFAULT_LAT, DEFAULT_LON = 59.9343, 30.3351
+
+
 def main():
     if not os.path.isfile(JSON_PATH):
         print(f"Сначала запустите parse_cian_favorites.py (нужен {JSON_PATH})")
@@ -84,7 +100,17 @@ def main():
     api_key = os.environ.get('YANDEX_GEO_API_KEY', '').strip()
     use_yandex = bool(api_key)
 
-    for i, apt in enumerate(apartments):
+    # Геокодируем только те записи, у которых координаты не проставлены (дефолтный центр СПб)
+    need_geocode = [
+        (i, apt) for i, apt in enumerate(apartments)
+        if apt.get('lat') == DEFAULT_LAT and apt.get('lon') == DEFAULT_LON
+    ]
+    if not need_geocode:
+        print("Нет квартир с дефолтными координатами (59.9343, 30.3351). Всё уже геокодировано.")
+        return
+
+    print(f"Геокодируем {len(need_geocode)} квартир (остальные уже имеют координаты).\n")
+    for i, apt in need_geocode:
         addr = apt.get('address') or 'Санкт-Петербург'
         addr = clean_address(addr)
         print(f"[{i+1}/{len(apartments)}] {addr[:70]}...")
@@ -97,9 +123,9 @@ def main():
             apt['lon'] = lon
             print(f"  -> {lat}, {lon}")
         else:
-            apt['lat'] = 59.9343
-            apt['lon'] = 30.3351
-            print("  -> не найдено, подставлен центр СПб")
+            apt['lat'] = DEFAULT_LAT
+            apt['lon'] = DEFAULT_LON
+            print("  -> не найдено, оставлен центр СПб")
         time.sleep(1.2 if use_yandex else 1.5)
 
     with open(JSON_PATH, 'w', encoding='utf-8') as f:

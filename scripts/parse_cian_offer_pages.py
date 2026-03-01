@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Парсит сохранённые HTML страницы объявлений Циан из data/<ID>.html и data/<ID>_files/.
-Сканирует папку data/ по маске <ID>.html (ID — число из URL объявления).
-Для каждой квартиры: извлекает из HTML JSON-LD (описание, цена, название), meta/og (площадь, этаж),
-собирает ВСЕ фото из папки data/<ID>_files/, обновляет запись в data/apartments.json.
+Парсит сохранённые HTML страницы объявлений Циан:
+- из data/<ID>.html и data/<ID>_files/ (первые 15 квартир),
+- из data/static_2/<ID>.html и data/static_2/<ID>_files/ (вторая пачка, 18 квартир).
+Для каждой квартиры: JSON-LD (описание, цена, название), meta (площадь, этаж), фото из соответствующей папки.
+Обновляет запись в data/apartments.json.
 После запуска: python scripts/create_map_cian.py
 """
 import json
@@ -16,6 +17,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SCRIPT_DIR)
 JSON_PATH = os.path.join(ROOT, 'data', 'apartments.json')
 DATA_DIR = os.path.join(ROOT, 'data')
+STATIC_2_DIR = os.path.join(ROOT, 'data', 'static_2')
 
 IMAGE_EXT = ('.jpg', '.jpeg', '.png', '.webp')
 # Исключаем только явные иконки интерфейса (не фото квартир)
@@ -36,6 +38,24 @@ def collect_local_photos(offer_id: str):
         if any(skip in base_lower for skip in SKIP_NAME_PARTS):
             continue
         rel = 'data/' + offer_id + '_files/' + name.replace('\\', '/')
+        paths.append(rel)
+    return paths
+
+
+def collect_local_photos_static2(offer_id: str):
+    """Собрать фото из data/static_2/<ID>_files/ (для второй пачки квартир)."""
+    folder = os.path.join(STATIC_2_DIR, offer_id + '_files')
+    if not os.path.isdir(folder):
+        return []
+    paths = []
+    for name in sorted(os.listdir(folder)):
+        base, ext = os.path.splitext(name)
+        if ext.lower() not in IMAGE_EXT:
+            continue
+        base_lower = base.lower()
+        if any(skip in base_lower for skip in SKIP_NAME_PARTS):
+            continue
+        rel = 'data/static_2/' + offer_id + '_files/' + name.replace('\\', '/')
         paths.append(rel)
     return paths
 
@@ -91,11 +111,18 @@ def extract_ldjson(soup):
 
 
 def extract_meta(soup):
-    """Площадь, этаж, цена из meta и og:title."""
+    """Площадь, этаж, цена, адрес из meta og:title и <title>."""
     out = {}
     og = soup.find('meta', property='og:title')
+    title_str = None
     if og and og.get('content'):
-        t = og['content']
+        title_str = og['content'].strip()
+    if not title_str:
+        t_tag = soup.find('title')
+        if t_tag and t_tag.string:
+            title_str = t_tag.string.strip()
+    if title_str:
+        t = title_str
         m_price = re.search(r'за\s+([\d\s]+)\s*руб', t, re.I)
         if m_price:
             out['price_str'] = m_price.group(1).replace(' ', '') + ' ₽'
@@ -105,6 +132,19 @@ def extract_meta(soup):
         m_floor = re.search(r'этаж\s+(\d+/\d+)', t, re.I)
         if m_floor:
             out['floor'] = m_floor.group(1)
+        # Адрес только из <title> (в og:title адреса нет)
+        title_full = None
+        t_tag = soup.find('title')
+        if t_tag and t_tag.string:
+            title_full = t_tag.string.strip()
+        if title_full:
+            m_addr = re.search(r'[\d,.]+\s*(?:м\.?кв\.?|м²)\s*(.+?)\s*-\s*база', title_full, re.I | re.DOTALL)
+        else:
+            m_addr = re.search(r'[\d,.]+\s*(?:м\.?кв\.?|м²)\s*(.+?)\s*-\s*база', t, re.I | re.DOTALL)
+        if m_addr:
+            addr = re.sub(r'\s+', ' ', m_addr.group(1).strip()).strip().strip(',')
+            if addr and len(addr) > 10 and 'Санкт-Петербург' in addr:
+                out['address'] = addr[:300]
     desc = soup.find('meta', attrs={'name': 'description'})
     if desc and desc.get('content') and 'total_area' not in out:
         m = re.search(r'площадью\s+([\d,]+)\s*м', desc['content'], re.I)
@@ -155,37 +195,52 @@ def main():
         print(f"Папка не найдена: {DATA_DIR}")
         return
 
-    # Только файлы вида 324787026.html в корне data/ (не во вложенных папках)
-    files = []
+    # Файлы из data/<ID>.html (первые 15) и data/static_2/<ID>.html (вторая пачка, 18 шт.)
+    files_by_id = {}
     for name in os.listdir(DATA_DIR):
         m = re.match(r'^(\d+)\.html$', name)
         if m:
             offer_id = m.group(1)
             path = os.path.join(DATA_DIR, name)
             if os.path.isfile(path):
-                files.append((offer_id, path))
+                files_by_id[offer_id] = (path, 'root')
+    if os.path.isdir(STATIC_2_DIR):
+        for name in os.listdir(STATIC_2_DIR):
+            m = re.match(r'^(\d+)\.html$', name)
+            if m:
+                offer_id = m.group(1)
+                if offer_id in files_by_id:
+                    continue
+                path = os.path.join(STATIC_2_DIR, name)
+                if os.path.isfile(path):
+                    files_by_id[offer_id] = (path, 'static_2')
 
-    if not files:
-        print(f"В папке {DATA_DIR} нет файлов вида <ID>.html (например 324787026.html).")
+    if not files_by_id:
+        print(f"В data/ и data/static_2/ нет файлов вида <ID>.html")
         return
 
-    print(f"Найдено HTML в data/: {len(files)}. Квартир в JSON: {len(by_id)}.")
+    print(f"Найдено HTML: {len(files_by_id)} (data/ + static_2/). Квартир в JSON: {len(by_id)}.")
 
     updated_any = 0
-    for offer_id, filepath in files:
+    for offer_id, (filepath, source) in files_by_id.items():
         if offer_id not in by_id:
             print(f"  Пропуск {offer_id}: нет в apartments.json")
             continue
         apt = by_id[offer_id]
         changed = False
 
-        # 1) Локальные фото из data/<ID>_files/
-        local_photos = collect_local_photos(offer_id)
+        # 1) Локальные фото: из data/<ID>_files/ или data/static_2/<ID>_files/
+        if source == 'static_2':
+            local_photos = collect_local_photos_static2(offer_id)
+            photo_note = 'static_2/' + offer_id + '_files/'
+        else:
+            local_photos = collect_local_photos(offer_id)
+            photo_note = offer_id + '_files/'
         if local_photos:
             apt['photos'] = local_photos
             apt['img_src'] = local_photos[0]
             changed = True
-            print(f"  {offer_id}: {len(local_photos)} фото из {offer_id}_files/")
+            print(f"  {offer_id}: {len(local_photos)} фото из {photo_note}")
 
         # 2) Данные из HTML (описание, цена, площадь, этаж)
         parsed = parse_html_file(filepath)
@@ -199,6 +254,8 @@ def main():
             apt['price_value'] = parsed['price_value']
             if parsed.get('price_str'):
                 apt['price'] = parsed['price_str']
+            else:
+                apt['price'] = str(parsed['price_value']) + ' ₽'
             changed = True
         if parsed.get('total_area') is not None:
             apt['total_area'] = parsed['total_area']
@@ -208,6 +265,9 @@ def main():
             changed = True
         if parsed.get('price_per_sqm') is not None:
             apt['price_per_sqm'] = parsed['price_per_sqm']
+            changed = True
+        if parsed.get('address'):
+            apt['address'] = parsed['address'][:300]
             changed = True
 
         if changed:
