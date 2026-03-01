@@ -194,7 +194,8 @@ function renderList(apartmentsToRender, totalCount) {
         cardsContainer.appendChild(div);
     });
 
-    window._lastSortedApartments = apartmentsToRender;
+    // Не перезаписываем _lastSortedApartments — он хранит полный отсортированный список;
+    // фильтр по тексту применяется только в applyListFilter.
 }
 
 function initList() {
