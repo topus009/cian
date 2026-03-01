@@ -89,6 +89,16 @@ def extract_ldjson(soup):
                 out['description'] = str(desc).strip()
         if obj.get('name'):
             out['title'] = str(obj['name']).strip()
+            # Общая площадь из названия: "41,6 м²" или "36 м²"
+            name = out['title']
+            ma = re.search(r'([\d,\.]+)\s*м\s*²', name) or re.search(r'([\d,\.]+)\s*м²', name)
+            if ma:
+                try:
+                    v = float(ma.group(1).replace(',', '.'))
+                    if 15 <= v <= 200:
+                        out['total_area'] = str(int(v)) if v == int(v) else str(round(v, 1))
+                except ValueError:
+                    pass
         if obj.get('image'):
             imgs = obj['image']
             if isinstance(imgs, str):
@@ -126,9 +136,16 @@ def extract_meta(soup):
         m_price = re.search(r'за\s+([\d\s]+)\s*руб', t, re.I)
         if m_price:
             out['price_str'] = m_price.group(1).replace(' ', '') + ' ₽'
-        m_area = re.search(r'([\d,]+)\s*м\.?кв', t, re.I)
+        # Площадь: только число, похожее на общую (15–200 м²), чтобы не захватить площадь комнаты/кухни (4, 8, 12)
+        m_area = re.search(r'([\d,.]+)\s*(?:м\.?кв\.?|м²)', t, re.I)
         if m_area:
-            out['total_area'] = m_area.group(1).replace(',', '.')
+            raw = m_area.group(1).replace(',', '.')
+            try:
+                val = float(raw)
+                if 15 <= val <= 200:
+                    out['total_area'] = str(int(val)) if val == int(val) else str(round(val, 1))
+            except ValueError:
+                pass
         m_floor = re.search(r'этаж\s+(\d+/\d+)', t, re.I)
         if m_floor:
             out['floor'] = m_floor.group(1)
@@ -147,10 +164,42 @@ def extract_meta(soup):
                 out['address'] = addr[:300]
     desc = soup.find('meta', attrs={'name': 'description'})
     if desc and desc.get('content') and 'total_area' not in out:
-        m = re.search(r'площадью\s+([\d,]+)\s*м', desc['content'], re.I)
+        m = re.search(r'площадью\s+([\d,.\s]+?)\s*м', desc['content'], re.I)
         if m:
-            out['total_area'] = m.group(1).replace(',', '.')
+            raw = m.group(1).replace(',', '.').replace(' ', '').strip()
+            try:
+                val = float(raw)
+                if 15 <= val <= 200:
+                    out['total_area'] = str(int(val)) if val == int(val) else str(round(val, 1))
+            except ValueError:
+                pass
     return out
+
+
+def extract_build_year(text: str):
+    """Извлечь год постройки из текста (описание, страница). Несколько вариантов формулировок."""
+    if not text or not isinstance(text, str):
+        return None
+    text = re.sub(r'\s+', ' ', text)
+    patterns = [
+        r'(\d{4})\s*года?\s*постройки',
+        r'построен[а]?\s*в\s*(\d{4})',
+        r'(\d{4})\s*год[а]?\s*постройки',
+        r'дом[а]?\s*(\d{4})\s*год',
+        r'(\d{4})\s*г\.?\s*постройки',
+        r'в\s*(\d{4})\s*год',
+        r'(\d{4})\s*год[а]?\s*постройки',
+        r'постройки\s*(\d{4})',
+        r'год[а]?\s*постройки[^\d]*(\d{4})',
+        r'\b(19\d{2}|20\d{2})\s*год\b',
+    ]
+    for pat in patterns:
+        m = re.search(pat, text, re.I)
+        if m:
+            y = int(m.group(1))
+            if 1950 <= y <= 2030:
+                return y
+    return None
 
 
 def parse_html_file(filepath: str):
@@ -174,6 +223,14 @@ def parse_html_file(filepath: str):
                 out['price_per_sqm'] = round(pv / area_num)
         except (ValueError, TypeError):
             pass
+    # Год постройки: из описания и из всего HTML (на странице Циан часто указан в блоке характеристик)
+    combined = (out.get('description') or '') + ' ' + (out.get('title') or '')
+    year = extract_build_year(combined)
+    if year is None and soup:
+        body_text = soup.get_text(separator=' ')[:8000]
+        year = extract_build_year(body_text)
+    if year is not None:
+        out['build_year'] = year
     return out
 
 
@@ -268,6 +325,9 @@ def main():
             changed = True
         if parsed.get('address'):
             apt['address'] = parsed['address'][:300]
+            changed = True
+        if parsed.get('build_year') is not None:
+            apt['build_year'] = parsed['build_year']
             changed = True
 
         if changed:

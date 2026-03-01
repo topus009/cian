@@ -15,11 +15,19 @@
 <body>
     <div id="map"></div>
     <div id="list">
+        <div class="list-search-header">
+            <label class="list-search-label">Быстрый поиск по тексту карточки</label>
+            <div class="list-search-row">
+                <input type="text" id="list-search-input" class="list-search-input" placeholder="Адрес, метро, цена...">
+                <button type="button" id="list-search-clear" class="list-search-clear" title="Очистить">✕</button>
+            </div>
+        </div>
         <div class="sort-controls">
             <button class="sort-btn active" data-sort="rating">По рейтингу</button>
             <button class="sort-btn" data-sort="price">По цене</button>
             <button class="sort-btn" data-sort="default">По умолчанию</button>
         </div>
+        <div class="list-cards" id="list-cards"></div>
     </div>
 
     <div id="gallery-modal">
