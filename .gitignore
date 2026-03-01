@@ -1,1 +1,3 @@
-/data
+# Игнорируем всё содержимое data/, кроме apartments.js (он нужен для GitHub Pages)
+/data/*
+!/data/apartments.js
