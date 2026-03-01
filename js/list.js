@@ -1,4 +1,13 @@
 /** Список квартир в сайдбаре, сортировка, рейтинги */
+function getBuildYear(apt) {
+    if (apt.build_year) return String(apt.build_year);
+    const desc = (apt.description || '') + ' ' + (apt.title || '');
+    const m = desc.match(/(\d{4})\s*года?\s*постройки|построен[а]?\s*в\s*(\d{4})|(\d{4})\s*год[а]?\s*постройки|дом[а]?\s*(\d{4})|(\d{4})\s*г\.?\s*постройки/i);
+    if (m) return (m[1] || m[2] || m[3] || m[4] || m[5] || '').trim();
+    const year = desc.match(/\b(19\d{2}|20\d{2})\s*год/i);
+    return year ? year[1] : '';
+}
+
 function sortApartments(sortType) {
     const apartments = window.APARTMENTS || [];
     const sorted = [...apartments];
@@ -37,10 +46,12 @@ function renderList(apartmentsToRender) {
         }
 
         const num = index + 1;
+        const buildYear = getBuildYear(apt);
         div.innerHTML = '<span class="card-index">' + num + ' из ' + total + '</span>' +
             imgHtml +
             '<h3>' + (apt.title || '').replace(/</g, '&lt;') + '</h3>' +
             '<p class="price">' + (apt.price || '').replace(/</g, '&lt;') + '</p>' +
+            (buildYear ? '<p class="build-year">Год постройки: ' + buildYear + '</p>' : '') +
             '<p class="address">' + (apt.address || '').replace(/</g, '&lt;') + '</p>' +
             (apt.metro && apt.metro.length ? '<p class="metro">' + (apt.metro.join(' • ')).replace(/</g, '&lt;') + '</p>' : '') +
             '<div class="rating-buttons">' +
