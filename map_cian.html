@@ -15,16 +15,17 @@
 <body>
     <div id="map"></div>
     <div id="list">
-        <div class="list-search-header">
-            <label class="list-search-label">Быстрый поиск по тексту карточки</label>
-            <div class="list-search-row">
-                <input type="text" id="list-search-input" class="list-search-input" placeholder="Адрес, метро, цена...">
-                <button type="button" id="list-search-clear" class="list-search-clear" title="Очистить">✕</button>
+        <div class="list-top-row">
+            <div class="list-search-header">
+                <label class="list-search-label">Быстрый поиск по тексту карточки</label>
+                <div class="list-search-row">
+                    <input type="text" id="list-search-input" class="list-search-input" placeholder="Адрес, метро, цена...">
+                    <button type="button" id="list-search-clear" class="list-search-clear" title="Очистить">✕</button>
+                </div>
             </div>
-        </div>
-        <div class="sort-controls">
-            <label for="list-sort-select" class="sort-label">Сортировка:</label>
-            <select id="list-sort-select" class="sort-select">
+            <div class="sort-controls">
+                <label for="list-sort-select" class="sort-label">Сортировка:</label>
+                <select id="list-sort-select" class="sort-select">
                 <optgroup label="Рейтинг">
                     <option value="rating-desc">По рейтингу (лучшие сверху)</option>
                     <option value="rating-asc">По рейтингу (худшие сверху)</option>
@@ -50,6 +51,7 @@
                     <option value="rooms-desc">По кол-ву комнат (больше сначала)</option>
                 </optgroup>
             </select>
+        </div>
         </div>
         <div class="list-cards" id="list-cards"></div>
     </div>

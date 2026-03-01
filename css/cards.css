@@ -35,7 +35,16 @@
     color: #fff; font-size: 12px; text-align: center;
 }
 .apartment h3 { margin: 0 0 6px 0; font-size: 15px; line-height: 1.3; }
-.apartment .card-title-rooms { margin: 0 0 6px 0; font-size: 15px; line-height: 1.3; }
+.apartment .card-title-rooms {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    line-height: 1.3;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 8px;
+}
+.apartment .card-build-year-right { display: none; }
 .apartment .price { font-weight: bold; color: #0468FF; font-size: 16px; }
 .apartment .card-price-line {
     margin-bottom: 6px;
@@ -50,6 +59,11 @@
     font-size: 13px;
     font-weight: normal;
 }
+.apartment .card-price-line .card-price-per-sqm {
+    margin-left: 12px;
+    font-size: 13px;
+    color: #555;
+}
 .apartment .card-price-per-sqm {
     margin: 0 0 6px 0;
     font-size: 13px;
@@ -58,3 +72,42 @@
 .apartment .address { color: #666; font-size: 12px; margin: 0 0 6px 0; }
 .apartment .build-year { color: #555; font-size: 12px; margin: 0; }
 .apartment .metro { color: #555; font-size: 11px; margin-top: 4px; }
+.apartment .card-rooms,
+.apartment .card-area { font-weight: inherit; }
+
+/* Компактные карточки на мобильной */
+@media (max-width: 700px) {
+    .apartment {
+        padding: 6px 8px;
+        margin: 3px 6px;
+    }
+    .apartment .card-index { font-size: 11px; margin-bottom: 2px; }
+    .apartment .card-top-line { margin-bottom: 2px; gap: 4px 6px; }
+    .apartment .card-apt-id { font-size: 11px; }
+    .apartment .preview-wrap { margin-bottom: 4px; }
+    .apartment .preview-wrap img {
+        height: 90px;
+    }
+    .apartment .preview-wrap::after {
+        padding: 3px;
+        font-size: 10px;
+    }
+    .apartment .card-title-rooms,
+    .apartment h3 { font-size: 12px; margin: 0 0 2px 0; line-height: 1.25; }
+    .apartment .card-build-year-right {
+        display: inline-block;
+        margin-left: auto;
+        font-size: 11px;
+        color: #555;
+        font-weight: normal;
+    }
+    .apartment .card-price-line { margin-bottom: 2px; gap: 0 8px; }
+    .apartment .card-price-line .build-year { display: none; }
+    .apartment .card-price-line .card-price-per-sqm { margin-left: auto; font-size: 11px; }
+    .apartment .price { font-size: 13px; }
+    .apartment .address { font-size: 10px; margin: 0 0 2px 0; line-height: 1.25; }
+    .apartment .card-rating-row { margin-top: 2px; gap: 4px 6px; }
+    .apartment .card-rating-row .rating-buttons { margin: 0; }
+    .apartment .card-rating-row .rating-info { display: none; }
+    .apartment .card-rating-row .btn-cian-card { font-size: 10px; padding: 2px 6px; }
+}

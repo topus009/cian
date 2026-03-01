@@ -10,7 +10,7 @@ function openGallery(apt, photoIndex) {
 
     document.getElementById('gallery-title').textContent = (typeof getAptId === 'function' && getAptId(apt) ? 'Код ' + getAptId(apt) + ' — ' : '') + (apt.title || '');
     document.getElementById('gallery-description').textContent = apt.description || '';
-    document.getElementById('gallery-link').href = apt.url;
+    document.getElementById('gallery-link').href = apt.url || '#';
     document.getElementById('gallery-modal').classList.add('show');
     showGalleryPhoto(photos, currentPhotoIdx);
 }
