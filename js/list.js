@@ -64,7 +64,7 @@ function sortApartments(sortValue) {
         sorted.sort(function (a, b) {
             var oa = getRatingSortOrder(getRating(a.url));
             var ob = getRatingSortOrder(getRating(b.url));
-            return (ob - oa) * dir || (a.title || '').localeCompare(b.title || '');
+            return (oa - ob) * dir || (a.title || '').localeCompare(b.title || '');
         });
     } else if (field === 'price') {
         sorted.sort(function (a, b) {
