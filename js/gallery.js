@@ -8,7 +8,7 @@ function openGallery(apt, photoIndex) {
     currentPhotoIdx = photoIndex || 0;
     if (photos.length === 0) return;
 
-    document.getElementById('gallery-title').textContent = apt.title;
+    document.getElementById('gallery-title').textContent = (typeof getAptId === 'function' && getAptId(apt) ? 'Код ' + getAptId(apt) + ' — ' : '') + (apt.title || '');
     document.getElementById('gallery-description').textContent = apt.description || '';
     document.getElementById('gallery-link').href = apt.url;
     document.getElementById('gallery-modal').classList.add('show');

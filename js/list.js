@@ -26,11 +26,18 @@ function getRoomsCount(apt) {
     return 0;
 }
 
+function getAptId(apt) {
+    var url = apt.url || '';
+    var m = url.match(/\/(\d+)\/?$/);
+    return m ? m[1] : '';
+}
+
 function getCardSearchText(apt) {
     const year = getBuildYear(apt);
     const area = apt.total_area ? apt.total_area + ' м²' : '';
     const perSqm = apt.price_per_sqm != null ? String(apt.price_per_sqm) : '';
-    return [apt.title, apt.price, apt.address, year, area, perSqm, (apt.metro || []).join(' ')].filter(Boolean).join(' ').toLowerCase();
+    const aptId = getAptId(apt);
+    return [apt.title, apt.price, apt.address, year, area, perSqm, aptId, (apt.metro || []).join(' ')].filter(Boolean).join(' ').toLowerCase();
 }
 
 function formatPricePerSqm(value) {
@@ -128,8 +135,12 @@ function renderList(apartmentsToRender, totalCount) {
         const titleRooms = formatTitleRooms(apt);
         const areaStr = apt.total_area ? ', ' + apt.total_area + ' м²' : '';
         const pricePerSqm = apt.price_per_sqm != null ? formatPricePerSqm(apt.price_per_sqm) : '';
+        const aptId = getAptId(apt);
 
-        div.innerHTML = '<span class="card-index">' + num + ' из ' + totalCount + '</span>' +
+        div.innerHTML = '<div class="card-top-line">' +
+            '<span class="card-index">' + num + ' из ' + totalCount + '</span>' +
+            (aptId ? '<span class="card-apt-id">Код ' + aptId.replace(/</g, '&lt;') + '</span>' : '') +
+            '</div>' +
             imgHtml +
             '<h3 class="card-title-rooms">' + titleRooms.replace(/</g, '&lt;') + areaStr.replace(/</g, '&lt;') + '</h3>' +
             '<div class="card-price-line">' +
