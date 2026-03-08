@@ -17,3 +17,9 @@
 /data/static_3/*_files/*
 !/data/static_3/*_files/*.jpg
 !/data/static_3/*_files/*.jpeg
+!/data/static_4/
+/data/static_4/*
+!/data/static_4/*_files/
+/data/static_4/*_files/*
+!/data/static_4/*_files/*.jpg
+!/data/static_4/*_files/*.jpeg

@@ -27,6 +27,7 @@ function initMap(apartments) {
     }).addTo(map);
 
     apartments.forEach((apt) => {
+        if (apt.lat == null || apt.lon == null) return;
         const rating = getRating(apt.url);
         const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating) }).addTo(map);
         marker._apt = apt;

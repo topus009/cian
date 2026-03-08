@@ -20,6 +20,7 @@ JSON_PATH = os.path.join(ROOT, 'data', 'apartments.json')
 DATA_DIR = os.path.join(ROOT, 'data')
 STATIC_2_DIR = os.path.join(ROOT, 'data', 'static_2')
 STATIC_3_DIR = os.path.join(ROOT, 'data', 'static_3')
+STATIC_4_DIR = os.path.join(ROOT, 'data', 'static_4')
 
 IMAGE_EXT = ('.jpg', '.jpeg', '.png', '.webp')
 # Исключаем только явные иконки интерфейса (не фото квартир)
@@ -76,6 +77,24 @@ def collect_local_photos_static3(offer_id: str):
         if any(skip in base_lower for skip in SKIP_NAME_PARTS):
             continue
         rel = 'data/static_3/' + offer_id + '_files/' + name.replace('\\', '/')
+        paths.append(rel)
+    return paths
+
+
+def collect_local_photos_static4(offer_id: str):
+    """Собрать фото из data/static_4/<ID>_files/ (парсер по URL)."""
+    folder = os.path.join(STATIC_4_DIR, offer_id + '_files')
+    if not os.path.isdir(folder):
+        return []
+    paths = []
+    for name in sorted(os.listdir(folder)):
+        base, ext = os.path.splitext(name)
+        if ext.lower() not in IMAGE_EXT:
+            continue
+        base_lower = base.lower()
+        if any(skip in base_lower for skip in SKIP_NAME_PARTS):
+            continue
+        rel = 'data/static_4/' + offer_id + '_files/' + name.replace('\\', '/')
         paths.append(rel)
     return paths
 
@@ -301,12 +320,22 @@ def main():
                 path = os.path.join(STATIC_3_DIR, name)
                 if os.path.isfile(path):
                     files_by_id[offer_id] = (path, 'static_3')
+    if os.path.isdir(STATIC_4_DIR):
+        for name in os.listdir(STATIC_4_DIR):
+            m = re.match(r'^(\d+)\.html$', name)
+            if m:
+                offer_id = m.group(1)
+                if offer_id in files_by_id:
+                    continue
+                path = os.path.join(STATIC_4_DIR, name)
+                if os.path.isfile(path):
+                    files_by_id[offer_id] = (path, 'static_4')
 
     if not files_by_id:
-        print(f"В data/, static_2/ и static_3/ нет файлов вида <ID>.html")
+        print(f"В data/, static_2/, static_3/ и static_4/ нет файлов вида <ID>.html")
         return
 
-    print(f"Найдено HTML: {len(files_by_id)} (data/ + static_2/ + static_3/). Квартир в JSON: {len(by_id)}.")
+    print(f"Найдено HTML: {len(files_by_id)} (data/ + static_2/ + static_3/ + static_4/). Квартир в JSON: {len(by_id)}.")
 
     updated_any = 0
     for offer_id, (filepath, source) in files_by_id.items():
@@ -316,13 +345,16 @@ def main():
         apt = by_id[offer_id]
         changed = False
 
-        # 1) Локальные фото: из data/<ID>_files/, static_2 или static_3
+        # 1) Локальные фото: из data/<ID>_files/, static_2, static_3 или static_4
         if source == 'static_2':
             local_photos = collect_local_photos_static2(offer_id)
             photo_note = 'static_2/' + offer_id + '_files/'
         elif source == 'static_3':
             local_photos = collect_local_photos_static3(offer_id)
             photo_note = 'static_3/' + offer_id + '_files/'
+        elif source == 'static_4':
+            local_photos = collect_local_photos_static4(offer_id)
+            photo_note = 'static_4/' + offer_id + '_files/'
         else:
             local_photos = collect_local_photos(offer_id)
             photo_note = offer_id + '_files/'
