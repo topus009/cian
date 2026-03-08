@@ -26,6 +26,14 @@ function getRoomsCount(apt) {
     return 0;
 }
 
+/** Номер этажа для сортировки (из "4/9" берётся 4). Нет данных → 0. */
+function getFloorNumber(apt) {
+    var s = (apt.floor || '').toString().trim();
+    if (!s) return 0;
+    var m = s.match(/^(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+}
+
 function getAptId(apt) {
     var url = apt.url || '';
     var m = url.match(/\/(\d+)\/?$/);
@@ -37,7 +45,8 @@ function getCardSearchText(apt) {
     const area = apt.total_area ? apt.total_area + ' м²' : '';
     const perSqm = apt.price_per_sqm != null ? String(apt.price_per_sqm) : '';
     const aptId = getAptId(apt);
-    return [apt.title, apt.price, apt.address, year, area, perSqm, aptId, (apt.metro || []).join(' ')].filter(Boolean).join(' ').toLowerCase();
+    const floor = apt.floor || '';
+    return [apt.title, apt.price, apt.address, year, area, perSqm, aptId, floor, (apt.metro || []).join(' ')].filter(Boolean).join(' ').toLowerCase();
 }
 
 function formatPricePerSqm(value) {
@@ -127,6 +136,10 @@ function sortApartments(sortValue) {
         sorted.sort(function (a, b) {
             return num(a, b, function (x) { return (x.total_area != null ? parseFloat(String(x.total_area).replace(',', '.'), 10) : 0); });
         });
+    } else if (field === 'floor') {
+        sorted.sort(function (a, b) {
+            return num(a, b, getFloorNumber) || (a.title || '').localeCompare(b.title || '');
+        });
     } else if (field === 'build_year') {
         sorted.sort(function (a, b) {
             var ya = parseInt(getBuildYear(a), 10) || 0;
@@ -191,6 +204,7 @@ function renderList(apartmentsToRender, totalCount) {
         const buildYear = getBuildYear(apt);
         const titleRooms = formatTitleRooms(apt);
         const areaStr = apt.total_area ? ', ' + apt.total_area + ' м²' : '';
+        const floorStr = apt.floor ? ', этаж ' + apt.floor : '';
         const pricePerSqm = apt.price_per_sqm != null ? formatPricePerSqm(apt.price_per_sqm) : '';
         const aptId = getAptId(apt);
 
@@ -208,6 +222,7 @@ function renderList(apartmentsToRender, totalCount) {
             '<h3 class="card-title-rooms">' +
             '<span class="card-rooms"' + styleRooms + '>' + titleRooms.replace(/</g, '&lt;') + '</span>' +
             (areaStr ? '<span class="card-area"' + styleArea + '>' + areaStr.replace(/</g, '&lt;') + '</span>' : '') +
+            (floorStr ? '<span class="card-floor">' + floorStr.replace(/</g, '&lt;') + '</span>' : '') +
             (buildYear ? '<span class="card-build-year-right"' + styleYear + '>Год: ' + buildYear + '</span>' : '') +
             '</h3>' +
             '<div class="card-price-line">' +

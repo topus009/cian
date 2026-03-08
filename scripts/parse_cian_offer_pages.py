@@ -215,6 +215,41 @@ def extract_meta(soup):
     return out
 
 
+def extract_object_factoids_items(soup):
+    """Из блоков data-name=ObjectFactoidsItem: по лейблу (Этаж, Площадь, Год постройки) извлечь значение."""
+    out = {}
+    items = soup.find_all(attrs={'data-name': 'ObjectFactoidsItem'})
+    for item in items:
+        spans = item.find_all('span', recursive=True)
+        if len(spans) < 2:
+            continue
+        label = (spans[0].get_text(strip=True) or '').strip()
+        value = (spans[1].get_text(strip=True) or '').strip()
+        if not label or not value:
+            continue
+        label_lower = label.lower()
+        if 'этаж' in label_lower:
+            m = re.search(r'(\d+)\s*[/из]\s*(\d+)', value, re.I)
+            if m:
+                out['floor'] = f"{m.group(1)}/{m.group(2)}"
+        elif 'площадь' in label_lower and 'total_area' not in out:
+            m = re.search(r'([\d,\.]+)\s*м', value, re.I)
+            if m:
+                try:
+                    v = float(m.group(1).replace(',', '.').strip())
+                    if 10 <= v <= 300:
+                        out['total_area'] = str(int(v)) if v == int(v) else str(round(v, 1))
+                except ValueError:
+                    pass
+        elif 'год' in label_lower and 'постройк' in label_lower and 'build_year' not in out:
+            m = re.search(r'(\d{4})', value)
+            if m:
+                y = int(m.group(1))
+                if 1950 <= y <= 2035:
+                    out['build_year'] = y
+    return out
+
+
 def extract_build_year(text: str):
     """Извлечь год постройки из текста (описание, страница). Несколько вариантов формулировок."""
     if not text or not isinstance(text, str):
@@ -252,6 +287,10 @@ def parse_html_file(filepath: str):
     meta = extract_meta(soup)
     for k, v in meta.items():
         if k not in out or out[k] is None:
+            out[k] = v
+    factoids = extract_object_factoids_items(soup)
+    for k, v in factoids.items():
+        if v is not None and (k not in out or out[k] is None):
             out[k] = v
     pv = out.get('price_value')
     ta = out.get('total_area')

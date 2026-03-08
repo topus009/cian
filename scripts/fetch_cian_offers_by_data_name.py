@@ -138,6 +138,46 @@ def parse_object_factoids(container):
     return out
 
 
+def parse_object_factoids_items(soup, root=None):
+    """Из блоков ObjectFactoidsItem: по лейблу (Этаж, Площадь, Год постройки) извлечь значение.
+    Структура: <div data-name="ObjectFactoidsItem"> ... <span>Этаж</span><span>4 из 9</span> """
+    out = {}
+    base = root or soup
+    items = base.find_all(attrs={'data-name': 'ObjectFactoidsItem'})
+    if not items:
+        items = soup.find_all(attrs={'data-name': 'ObjectFactoidsItem'})
+    for item in items:
+        spans = item.find_all('span', recursive=True)
+        if len(spans) < 2:
+            continue
+        label = (spans[0].get_text(strip=True) or '').strip()
+        value = (spans[1].get_text(strip=True) or '').strip()
+        if not label or not value:
+            continue
+        label_lower = label.lower()
+        if 'этаж' in label_lower:
+            # "4 из 9" -> "4/9"
+            m = re.search(r'(\d+)\s*[/из]\s*(\d+)', value, re.I)
+            if m:
+                out['floor'] = f"{m.group(1)}/{m.group(2)}"
+        elif 'площадь' in label_lower and 'total_area' not in out:
+            m = re.search(r'([\d,\.]+)\s*м', value, re.I)
+            if m:
+                try:
+                    v = float(m.group(1).replace(',', '.').strip())
+                    if 10 <= v <= 300:
+                        out['total_area'] = str(int(v)) if v == int(v) else str(round(v, 1))
+                except ValueError:
+                    pass
+        elif 'год' in label_lower and 'постройк' in label_lower and 'build_year' not in out:
+            m = re.search(r'(\d{4})', value)
+            if m:
+                y = int(m.group(1))
+                if 1950 <= y <= 2035:
+                    out['build_year'] = y
+    return out
+
+
 def image_url_to_full_size(url: str):
     """Заменить в конце URL -2 на -1 для полного размера картинки."""
     if not url:
@@ -210,6 +250,11 @@ def parse_offer_page(html: str, url: str):
 
     factoids_el = find_by_data_name(soup, 'ObjectFactoids', root)
     facts = parse_object_factoids(factoids_el)
+    # Новая вёрстка: ObjectFactoidsItem с лейблами «Этаж», «Площадь», «Год постройки»
+    facts_items = parse_object_factoids_items(soup, root)
+    for k, v in facts_items.items():
+        if v is not None:
+            facts[k] = v
     if not facts.get('total_area') and title:
         m = re.search(r'([\d,\.]+)\s*м\s*²', title, re.I) or re.search(r'([\d,\.]+)\s*м²', title, re.I)
         if m:
