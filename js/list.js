@@ -212,7 +212,7 @@ function renderList(apartmentsToRender, totalCount) {
             '</h3>' +
             '<div class="card-price-line">' +
             '<span class="price"' + stylePrice + '>' + (apt.price || '').replace(/</g, '&lt;') + '</span>' +
-            (buildYear ? '<span class="build-year"' + styleYear + '>Год постройки: ' + buildYear + '</span>' : '') +
+            (buildYear ? '<span class="build-year"' + styleYear + '>Год: ' + buildYear + '</span>' : '') +
             (pricePerSqm ? '<span class="card-price-per-sqm"' + stylePerSqm + '>' + pricePerSqm + '</span>' : '') +
             '</div>' +
             '<p class="address">' + (apt.address || '').replace(/</g, '&lt;') + '</p>' +
