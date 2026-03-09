@@ -53,8 +53,8 @@ function initMap(apartments) {
         const icon = L.divIcon({
             className: 'metro-marker',
             html: '<div class="metro-marker-dot" style="background:' + color + ';border-color:' + color + '"></div>',
-            iconSize: [14, 14],
-            iconAnchor: [7, 7]
+            iconSize: [10, 10],
+            iconAnchor: [5, 5]
         });
         const m = L.marker([st.lat, st.lon], { icon }).addTo(map);
         m._isMetro = true;
