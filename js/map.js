@@ -3,6 +3,25 @@ let map;
 const markers = [];
 const metroMarkers = [];
 
+const TILE_LAYERS = {
+    'OSM Standard':        { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',           attr: '&copy; OpenStreetMap' },
+    'OSM Hot':             { url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',         attr: '&copy; OpenStreetMap, HOT' },
+    'Транспорт (ÖPNV)':   { url: 'https://tileserver.memomaps.de/tilegen/{z}/{x}/{y}.png',        attr: '&copy; OpenStreetMap &copy; MeMoMaps' },
+    'CyclOSM':             { url: 'https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', attr: '&copy; OpenStreetMap &copy; CyclOSM' },
+    'CartoDB Positron':    { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attr: '&copy; OpenStreetMap &copy; CARTO' },
+    'CartoDB Voyager':     { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attr: '&copy; OpenStreetMap &copy; CARTO' },
+    'OpenTopoMap':         { url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',              attr: '&copy; OpenStreetMap &copy; OpenTopoMap' },
+    'Dark (CartoDB)':      { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',  attr: '&copy; OpenStreetMap &copy; CARTO' },
+    'Dark ч/б (Positron)': { url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', attr: '&copy; OpenStreetMap &copy; CARTO' },
+};
+
+function getSavedLayer() {
+    try { return localStorage.getItem('map_tile_layer') || ''; } catch(e) { return ''; }
+}
+function saveLayer(name) {
+    try { localStorage.setItem('map_tile_layer', name); } catch(e) {}
+}
+
 function createIcon(rating) {
     const isClosed = rating === 4;
     const c = getRatingColor(rating);
@@ -23,9 +42,39 @@ function updateMarkerIcon(apt, rating) {
 
 function initMap(apartments) {
     map = L.map('map').setView([59.9343, 30.3351], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+
+    const savedName = getSavedLayer();
+    const defaultName = TILE_LAYERS[savedName] ? savedName : 'OSM Standard';
+    let currentTile = L.tileLayer(TILE_LAYERS[defaultName].url, {
+        attribution: TILE_LAYERS[defaultName].attr, maxZoom: 19
     }).addTo(map);
+
+    // Контрол-селект выбора слоя
+    const LayerSelect = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function () {
+            const wrap = L.DomUtil.create('div', 'leaflet-bar layer-select-wrap');
+            const sel = L.DomUtil.create('select', 'layer-select', wrap);
+            Object.keys(TILE_LAYERS).forEach(function (name) {
+                const opt = document.createElement('option');
+                opt.value = name; opt.textContent = name;
+                if (name === defaultName) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            L.DomEvent.disableClickPropagation(wrap);
+            L.DomEvent.disableScrollPropagation(wrap);
+            sel.addEventListener('change', function () {
+                const picked = sel.value;
+                map.removeLayer(currentTile);
+                currentTile = L.tileLayer(TILE_LAYERS[picked].url, {
+                    attribution: TILE_LAYERS[picked].attr, maxZoom: 19
+                }).addTo(map);
+                saveLayer(picked);
+            });
+            return wrap;
+        }
+    });
+    new LayerSelect().addTo(map);
 
     apartments.forEach((apt) => {
         if (apt.lat == null || apt.lon == null) return;

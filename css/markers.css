@@ -14,3 +14,20 @@
   transition: transform 0.15s;
 }
 .metro-marker-dot:hover { transform: scale(1.4); }
+
+/* Селект выбора тайл-слоя карты */
+.layer-select-wrap {
+  background: #fff;
+  border-radius: 4px;
+  padding: 0;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+}
+.layer-select {
+  font-size: 12px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  background: #fff;
+}
