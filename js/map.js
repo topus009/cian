@@ -1,6 +1,7 @@
 /** Карта Leaflet и маркеры */
 let map;
 const markers = [];
+const metroMarkers = [];
 
 function createIcon(rating) {
     const isClosed = rating === 4;
@@ -43,6 +44,22 @@ function initMap(apartments) {
             if (el) { el.classList.add('highlighted'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
         });
         markers.push(marker);
+    });
+
+    // Станции метро — отдельный слой, метки по цвету линии
+    const metroStations = window.METRO_SPB || [];
+    metroStations.forEach((st) => {
+        const color = st.line_color || '#888';
+        const icon = L.divIcon({
+            className: 'metro-marker',
+            html: '<div class="metro-marker-dot" style="background:' + color + ';border-color:' + color + '"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+        const m = L.marker([st.lat, st.lon], { icon }).addTo(map);
+        m._isMetro = true;
+        m.bindPopup('<strong>Метро</strong> ' + (st.name || '') + '<br><small>' + st.lat + ', ' + st.lon + '</small>');
+        metroMarkers.push(m);
     });
 
     const valid = apartments.filter(a => a.lat != null && a.lon != null);

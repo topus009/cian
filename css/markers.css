@@ -2,3 +2,15 @@
 .custom-marker { background: transparent; border: none; }
 .custom-marker div { transition: transform 0.2s; }
 .custom-marker div:hover { transform: scale(1.15); }
+
+/* Станции метро — маленькие кружки по цвету линии */
+.metro-marker { background: transparent; border: none; }
+.metro-marker-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  transition: transform 0.15s;
+}
+.metro-marker-dot:hover { transform: scale(1.3); }
