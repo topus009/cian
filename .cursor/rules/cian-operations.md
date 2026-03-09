@@ -1,0 +1,196 @@
+# Операции с проектом Циан — инструкции для AI-агента
+
+Проект: интерактивная карта квартир с Циан (СПб) на Leaflet.
+Корень: `c:\Users\sj_89\Desktop\cian`
+
+---
+
+## Архитектура данных
+
+```
+data/apartments.json          ← главный источник истины (массив квартир)
+data/apartments.js            ← автогенерируемый JS: window.APARTMENTS = [...]
+data/metro_spb.json / .js     ← станции метро (статичные)
+data/<ID>_files/              ← фото квартир (1-я пачка)
+data/static_2/<ID>_files/     ← фото квартир (2-я пачка)
+data/static_3/<ID>_files/     ← фото квартир (3-я пачка)
+data/static_4/<ID>_files/     ← фото квартир (4-я пачка, автоскачивание)
+```
+
+**Ключевое правило:** после ЛЮБОГО изменения `apartments.json` нужно перегенерировать JS:
+```bash
+python scripts/create_map_cian.py
+```
+
+---
+
+## 1. УДАЛЕНИЕ КВАРТИР
+
+Пользователь даёт список ID (числа из URL вида `https://spb.cian.ru/sale/flat/<ID>`).
+
+### Команда:
+```bash
+cd "c:\Users\sj_89\Desktop\cian"
+python -c "
+import json, re
+text = open('data/apartments.js', encoding='utf-8').read()
+m = re.match(r'window\.APARTMENTS\s*=\s*', text)
+arr = json.loads(text[m.end():].rstrip().rstrip(';'))
+ids = {'ID1', 'ID2', 'ID3'}  # ← подставить ID из запроса пользователя
+before = len(arr)
+arr = [a for a in arr if not any(i in (a.get('url') or '') for i in ids)]
+after = len(arr)
+print(f'Was {before}, now {after}, removed {before - after}')
+out = 'window.APARTMENTS = ' + json.dumps(arr, ensure_ascii=False) + ';\n'
+open('data/apartments.js', 'w', encoding='utf-8').write(out)
+"
+```
+
+Этот скрипт:
+- Читает `data/apartments.js` (не JSON, а JS с префиксом `window.APARTMENTS = `)
+- Фильтрует квартиры по ID в URL
+- Перезаписывает `data/apartments.js`
+- **НЕ** трогает `apartments.json` — это нормально, apartments.js является рабочим файлом фронтенда
+
+### Проверка:
+- Убедиться что `removed` = количеству запрошенных ID
+- Папки `data/*/<ID>_files/` можно НЕ удалять (они в .gitignore)
+
+---
+
+## 2. ПЕРЕКАЧКА ДАННЫХ / ФОТО ДЛЯ СТАРЫХ КВАРТИР
+
+«Старые» = квартиры с фото НЕ из `data/static_4/` (т.е. из data/, static_2/, static_3/).
+
+### Вариант А: Перекачать фото через requests + Selenium
+```bash
+cd "c:\Users\sj_89\Desktop\cian"
+python scripts/refresh_old_photos_and_remove.py
+```
+**Внимание:** В этом скрипте захардкожены ID квартир на удаление — проверить/обновить перед запуском!
+
+### Вариант Б: Полный перепарсинг сохранённых HTML
+```bash
+python scripts/parse_cian_offer_pages.py
+python scripts/create_map_cian.py
+```
+Парсит HTML из `data/`, `data/static_2/`, `data/static_3/`, `data/static_4/` — обновляет описание, цену, площадь, этаж, фото в `apartments.json`, затем генерирует JS.
+
+### Вариант В: Только обновить этаж
+```bash
+python scripts/update_floor_only.py
+```
+Автоматически вызывает `create_map_cian.py` в конце.
+
+### Вариант Г: Синхронизировать пути к фото с реальными файлами на диске
+```bash
+python scripts/sync_cian_photos.py
+```
+
+---
+
+## 3. СКАЧАТЬ НОВЫЕ КВАРТИРЫ С ЦИАН (не трогая существующие)
+
+### Шаг 1: Подготовить список URL
+Создать/дополнить файл `data/urls_to_fetch.txt` — по одному URL на строку:
+```
+https://spb.cian.ru/sale/flat/329000001
+https://spb.cian.ru/sale/flat/329000002
+```
+
+### Шаг 2: Скачать HTML и фото
+
+**Через requests (быстро, может не пройти защиту Циан):**
+```bash
+python scripts/fetch_cian_offers_by_data_name.py data/urls_to_fetch.txt
+```
+
+**Через Selenium/Chrome (надёжно, обходит капчу):**
+```bash
+python scripts/fetch_cian_offers_selenium.py data/urls_to_fetch.txt
+```
+- Открывает реальный Chrome
+- При капче ждёт ручного решения (до 5 мин)
+- Сохраняет HTML в `data/static_4/<ID>.html`, фото в `data/static_4/<ID>_files/`
+- Обновляет `apartments.json` после каждой квартиры (прогресс не теряется)
+
+### Шаг 3: Подставить точные координаты
+Для КАЖДОЙ новой квартиры нужно найти точные координаты:
+1. Найти адрес в 2ГИС
+2. Взять lat/lon
+3. Обновить в `data/apartments.json`
+
+Или запустить геокодер:
+```bash
+# Нужен YANDEX_GEO_API_KEY в переменных окружения
+python scripts/geocode_cian.py
+```
+
+### Шаг 4: Перегенерировать JS для фронтенда
+```bash
+python scripts/create_map_cian.py
+```
+
+### Шаг 5 (если новая папка static_N): Обновить .gitignore
+Добавить блок:
+```gitignore
+!/data/static_N/
+/data/static_N/*
+!/data/static_N/*_files/
+/data/static_N/*_files/*
+!/data/static_N/*_files/*.jpg
+!/data/static_N/*_files/*.jpeg
+```
+
+---
+
+## 4. ДОБАВИТЬ КВАРТИРЫ ИЗ СОХРАНЁННОЙ СТРАНИЦЫ «ИЗБРАННОЕ»
+
+### Если это первая пачка:
+```bash
+# Сохранить страницу «Избранное» Циан как data/favorite.htm
+python scripts/parse_cian_favorites.py
+python scripts/geocode_cian.py
+python scripts/create_map_cian.py
+```
+
+### Если это дополнительная пачка:
+```bash
+# Сохранить как data/favorite_2.html (или _3, _4...)
+# Скрипт merge ожидает файл data/favorite_2.html
+python scripts/merge_cian_favorites.py
+python scripts/geocode_cian.py
+python scripts/create_map_cian.py
+```
+
+---
+
+## 5. СПРАВОЧНИК СКРИПТОВ
+
+| Скрипт | Что делает | Аргументы |
+|--------|-----------|-----------|
+| `parse_cian_favorites.py` | Парсит страницу «Избранное» → apartments.json | нет |
+| `merge_cian_favorites.py` | Сливает вторую пачку избранного | нет (читает data/favorite_2.html) |
+| `geocode_cian.py` | Геокодирование адресов → lat/lon | нет (env: YANDEX_GEO_API_KEY) |
+| `create_map_cian.py` | apartments.json → apartments.js | нет |
+| `fetch_cian_offers.py` | Скачивает страницы объявлений (requests) | нет |
+| `fetch_cian_offers_by_data_name.py` | Скачивает по списку URL (requests) | [путь к urls.txt] |
+| `fetch_cian_offers_selenium.py` | Скачивает через Chrome/Selenium | [путь к urls.txt] |
+| `parse_cian_offer_pages.py` | Парсит сохранённые HTML → apartments.json | нет |
+| `update_floor_only.py` | Обновляет только поле floor | нет |
+| `sync_cian_photos.py` | Синхронизирует photos[] с файлами на диске | нет |
+| `refresh_old_photos_and_remove.py` | Перекачивает фото старых квартир | нет |
+| `parse_metro_spb.py` | Парсит таблицу метро → metro_spb.json | [файл.html] или --fetch |
+
+---
+
+## 6. ВАЖНЫЕ ПРАВИЛА
+
+1. **НЕ коммитить и НЕ пушить** без явной просьбы пользователя
+2. После изменения apartments.json/apartments.js — **всегда** проверять что количество квартир корректно (вывести was/now/removed)
+3. `apartments.js` — однострочный JS-файл с `window.APARTMENTS = [...];\n`
+4. При удалении квартир достаточно править только `apartments.js` (фронтенд-файл)
+5. При добавлении/обновлении — править `apartments.json`, затем `python scripts/create_map_cian.py`
+6. ID квартиры = число из URL: `https://spb.cian.ru/sale/flat/<ID>`
+7. Все скрипты запускаются из корня проекта: `cd "c:\Users\sj_89\Desktop\cian"`
+8. Зависимости: `beautifulsoup4`, `requests`, `selenium` (опционально)
