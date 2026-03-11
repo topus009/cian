@@ -28,33 +28,44 @@ python scripts/create_map_cian.py
 
 Пользователь даёт список ID (числа из URL вида `https://spb.cian.ru/sale/flat/<ID>`).
 
-### Команда:
+**Важно:** удалять нужно из **apartments.json** и затем перегенерировать **apartments.js**. Если удалять только из apartments.js, то json и js рассинхронизируются — при следующем «полном» удалении или пересборке «вернутся» ранее удалённые квартиры.
+
+### Шаг 1: Удалить из data/apartments.json
 ```bash
-cd "c:\Users\sj_89\Desktop\cian"
+cd "C:\Users\sj_89\Desktop\cian"
 python -c "
-import json, re
-text = open('data/apartments.js', encoding='utf-8').read()
-m = re.match(r'window\.APARTMENTS\s*=\s*', text)
-arr = json.loads(text[m.end():].rstrip().rstrip(';'))
-ids = {'ID1', 'ID2', 'ID3'}  # ← подставить ID из запроса пользователя
+import json
+path = 'data/apartments.json'
+with open(path, encoding='utf-8') as f:
+    arr = json.load(f)
+ids = {'ID1', 'ID2', 'ID3'}  # подставить ID из запроса пользователя
 before = len(arr)
 arr = [a for a in arr if not any(i in (a.get('url') or '') for i in ids)]
-after = len(arr)
-print(f'Was {before}, now {after}, removed {before - after}')
-out = 'window.APARTMENTS = ' + json.dumps(arr, ensure_ascii=False) + ';\n'
-open('data/apartments.js', 'w', encoding='utf-8').write(out)
+with open(path, 'w', encoding='utf-8') as f:
+    json.dump(arr, f, ensure_ascii=False, indent=2)
+print(f'Removed {before - len(arr)} apartments')
 "
 ```
 
-Этот скрипт:
-- Читает `data/apartments.js` (не JSON, а JS с префиксом `window.APARTMENTS = `)
-- Фильтрует квартиры по ID в URL
-- Перезаписывает `data/apartments.js`
-- **НЕ** трогает `apartments.json` — это нормально, apartments.js является рабочим файлом фронтенда
+### Шаг 2: Перегенерировать apartments.js
+```bash
+python scripts/create_map_cian.py
+```
 
-### Проверка:
-- Убедиться что `removed` = количеству запрошенных ID
-- Папки `data/*/<ID>_files/` можно НЕ удалять (они в .gitignore)
+### Шаг 3 (опционально, «полное» удаление): удалить папки с фото и HTML
+```bash
+python -c "
+import os, shutil
+ids = ['ID1','ID2','ID3']
+roots = ['data', 'data/static_2', 'data/static_3', 'data/static_4']
+for rid in ids:
+    for root in roots:
+        d = os.path.join(root, rid + '_files')
+        if os.path.isdir(d): shutil.rmtree(d)
+        f = os.path.join(root, rid + '.html')
+        if os.path.isfile(f): os.remove(f)
+"
+```
 
 ---
 
@@ -187,10 +198,9 @@ python scripts/create_map_cian.py
 ## 6. ВАЖНЫЕ ПРАВИЛА
 
 1. **НЕ коммитить и НЕ пушить** без явной просьбы пользователя
-2. После изменения apartments.json/apartments.js — **всегда** проверять что количество квартир корректно (вывести was/now/removed)
-3. `apartments.js` — однострочный JS-файл с `window.APARTMENTS = [...];\n`
-4. При удалении квартир достаточно править только `apartments.js` (фронтенд-файл)
-5. При добавлении/обновлении — править `apartments.json`, затем `python scripts/create_map_cian.py`
-6. ID квартиры = число из URL: `https://spb.cian.ru/sale/flat/<ID>`
-7. Все скрипты запускаются из корня проекта: `cd "c:\Users\sj_89\Desktop\cian"`
-8. Зависимости: `beautifulsoup4`, `requests`, `selenium` (опционально)
+2. При удалении квартир **всегда** править **apartments.json**, затем запускать `create_map_cian.py`. Не править только apartments.js — иначе json и js рассинхронизируются и при следующей пересборке «вернутся» старые квартиры.
+3. После изменения apartments.json — **всегда** запускать `python scripts/create_map_cian.py`
+4. `apartments.js` — однострочный JS-файл с `window.APARTMENTS = [...];\n`, автогенерируется из JSON
+5. ID квартиры = число из URL: `https://spb.cian.ru/sale/flat/<ID>`
+6. Все скрипты запускаются из корня проекта: `cd "C:\Users\sj_89\Desktop\cian"`
+7. Зависимости: `beautifulsoup4`, `requests`, `selenium` (опционально)
