@@ -1,6 +1,7 @@
 # data/ для GitHub Pages: только apartments.js и картинки JPG (чтобы не пушить лишнее)
 /data/*
 !/data/apartments.js
+!/data/hidden_ids.js
 !/data/metro_spb.js
 !/data/*_files/
 /data/*_files/*

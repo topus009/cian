@@ -85,6 +85,7 @@
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="./data/apartments.js"></script>
+    <script src="./data/hidden_ids.js"></script>
     <script src="./data/metro_spb.js"></script>
     <script src="./js/rating.js"></script>
     <script src="./js/gallery.js"></script>
@@ -92,8 +93,11 @@
     <script src="./js/list.js"></script>
     <script>
         (function () {
-            const apartments = window.APARTMENTS || [];
-            initMap(apartments);
+            var full = window.APARTMENTS || [];
+            var hiddenIds = window.APARTMENT_HIDDEN_IDS || [];
+            function getId(a) { var m = (a.url || '').match(/\/(\d+)\/?$/); return m ? m[1] : ''; }
+            window.APARTMENTS = full.filter(function (a) { return hiddenIds.indexOf(getId(a)) === -1; });
+            initMap(window.APARTMENTS);
             initGallery();
             initList();
         })();
