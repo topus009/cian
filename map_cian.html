@@ -62,23 +62,29 @@
 
     <div id="gallery-modal">
         <div class="modal-header">
-            <span class="modal-title" id="gallery-title"></span>
+            <div class="modal-header-text">
+                <span class="modal-title" id="gallery-title"></span>
+                <span class="modal-subtitle" id="gallery-subtitle"></span>
+            </div>
             <button class="modal-close" id="gallery-close">Закрыть</button>
         </div>
         <div class="modal-body">
             <div id="gallery-slider-wrap">
                 <div id="gallery-slider">
-                    <div class="slider-img-wrap"><img id="gallery-img" src="" alt=""></div>
+                    <div class="slider-img-wrap">
+                        <img id="gallery-img" src="" alt="">
+                        <span class="slider-zone slider-zone-prev" aria-hidden="true"><span class="slider-arrow"></span></span>
+                        <span class="slider-zone slider-zone-next" aria-hidden="true"><span class="slider-arrow"></span></span>
+                    </div>
                     <div class="slider-nav">
-                        <button type="button" id="gallery-prev">← Назад</button>
-                        <span class="slider-counter" id="gallery-counter">1 / 1</span>
-                        <button type="button" id="gallery-next">Вперёд →</button>
+                        <div class="slider-nav-left">
+                            <button type="button" id="gallery-prev">← Назад</button>
+                            <span class="slider-counter" id="gallery-counter">1 / 1</span>
+                            <button type="button" id="gallery-next">Вперёд →</button>
+                        </div>
+                        <a id="gallery-link" class="modal-link modal-link-footer" href="#" target="_blank">Открыть на Циан</a>
                     </div>
                 </div>
-            </div>
-            <div class="modal-sidebar">
-                <div class="modal-description" id="gallery-description"></div>
-                <a id="gallery-link" class="modal-link" href="#" target="_blank">Открыть на Циан</a>
             </div>
         </div>
     </div>
