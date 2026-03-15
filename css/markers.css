@@ -31,3 +31,6 @@
   cursor: pointer;
   background: #fff;
 }
+.visibility-select-wrap {
+  margin-top: 6px;
+}

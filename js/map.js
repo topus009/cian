@@ -76,6 +76,37 @@ function initMap(apartments) {
     });
     new LayerSelect().addTo(map);
 
+    // Режим отображения квартир: только видимые / видимые + последние скрытые / все
+    const VisibilitySelect = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function () {
+            const wrap = L.DomUtil.create('div', 'leaflet-bar layer-select-wrap visibility-select-wrap');
+            const sel = L.DomUtil.create('select', 'layer-select visibility-select', wrap);
+            const options = [
+                { value: 'visible', text: 'Только видимые' },
+                { value: 'visible_plus_newly', text: 'Видимые + последние скрытые' },
+                { value: 'all', text: 'Все' }
+            ];
+            const currentMode = (typeof window.CIAN_VISIBILITY_MODE !== 'undefined' ? window.CIAN_VISIBILITY_MODE : null) || (function () { try { return localStorage.getItem('cian_visibility_mode') || 'visible'; } catch (e) { return 'visible'; } })();
+            options.forEach(function (o) {
+                const opt = document.createElement('option');
+                opt.value = o.value;
+                opt.textContent = o.text;
+                if (o.value === currentMode) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            L.DomEvent.disableClickPropagation(wrap);
+            L.DomEvent.disableScrollPropagation(wrap);
+            sel.addEventListener('change', function () {
+                const value = sel.value;
+                try { localStorage.setItem('cian_visibility_mode', value); } catch (e) {}
+                window.location.reload();
+            });
+            return wrap;
+        }
+    });
+    new VisibilitySelect().addTo(map);
+
     apartments.forEach((apt) => {
         if (apt.lat == null || apt.lon == null) return;
         const rating = getRating(apt.url);

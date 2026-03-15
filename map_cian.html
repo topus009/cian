@@ -100,9 +100,14 @@
     <script>
         (function () {
             var full = window.APARTMENTS || [];
-            var hiddenIds = window.APARTMENT_HIDDEN_IDS || [];
+            var mode;
+            try { mode = localStorage.getItem('cian_visibility_mode') || 'visible'; } catch (e) { mode = 'visible'; }
             function getId(a) { var m = (a.url || '').match(/\/(\d+)\/?$/); return m ? m[1] : ''; }
-            window.APARTMENTS = full.filter(function (a) { return hiddenIds.indexOf(getId(a)) === -1; });
+            var hiddenFull = window.APARTMENT_HIDDEN_IDS || [];
+            var hiddenBase = window.APARTMENT_HIDDEN_IDS_BASE || [];
+            var idsToHide = mode === 'all' ? [] : (mode === 'visible_plus_newly' ? hiddenBase : hiddenFull);
+            window.APARTMENTS = idsToHide.length ? full.filter(function (a) { return idsToHide.indexOf(getId(a)) === -1; }) : full;
+            window.CIAN_VISIBILITY_MODE = mode;
             initMap(window.APARTMENTS);
             initGallery();
             initList();
