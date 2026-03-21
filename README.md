@@ -42,6 +42,17 @@
   ```
   В карте по клику на превью откроется слайдер со всеми фото и полным описанием.
 
+## Проверка объявлений на Циан (снято / 404)
+
+Скрипт `scripts/check_cian_offers_live.py` проходит по всем URL из `data/apartments.json`: **404** — объявления нет; в HTML блок **`data-name="OfferUnpublished"`** — снято с публикации. В консоли показывается прогресс «текущий / всего» квартир.
+
+```bash
+python scripts/check_cian_offers_live.py
+python scripts/check_cian_offers_live.py --json
+```
+
+Подробнее — в `.cursor/rules/cian-operations.md`.
+
 ## Структура
 
 - `data/favorite.htm` — сохранённая страница «Избранное» Циан (со статикой в `data/favorite_files/`).

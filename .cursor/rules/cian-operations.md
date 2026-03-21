@@ -98,6 +98,31 @@ python scripts/update_floor_only.py
 python scripts/sync_cian_photos.py
 ```
 
+### Проверка «живых» объявлений (снято / 404)
+
+Скрипт **`scripts/check_cian_offers_live.py`** обходит все уникальные URL из `data/apartments.json`:
+
+- **HTTP 404** — объявление удалено с Циан.
+- **HTTP 200** + в HTML есть **`data-name="OfferUnpublished"`** — «Объявление снято с публикации».
+
+В консоли выводится прогресс в виде полоски и счётчика **`текущий / всего`** квартир (не проценты).
+
+```bash
+cd "C:\Users\sj_89\Desktop\cian"
+python scripts/check_cian_offers_live.py
+python scripts/check_cian_offers_live.py --json          # результат JSON в stdout, прогресс в stderr
+python scripts/check_cian_offers_live.py --delay 1.0     # пауза между запросами
+python scripts/check_cian_offers_live.py --no-progress   # без строки прогресса
+```
+
+Зависимости: `pip install requests beautifulsoup4`. При блокировке/капче Циан обычный GET может врать — тогда нужен браузер (Selenium).
+
+После получения списка проблемных ID квартиры удаляют из **`apartments.json`**, чистят папки **`data/`, `data/static_2/`, …, `data/static_4/`** (`<ID>_files/`, `<ID>.html`), при необходимости правят **`data/hidden_ids.js`**, затем:
+
+```bash
+python scripts/create_map_cian.py
+```
+
 ---
 
 ## 3. СКАЧАТЬ НОВЫЕ КВАРТИРЫ С ЦИАН (не трогая существующие)
@@ -192,6 +217,7 @@ python scripts/create_map_cian.py
 | `sync_cian_photos.py` | Синхронизирует photos[] с файлами на диске | нет |
 | `refresh_old_photos_and_remove.py` | Перекачивает фото старых квартир | нет |
 | `parse_metro_spb.py` | Парсит таблицу метро → metro_spb.json | [файл.html] или --fetch |
+| `check_cian_offers_live.py` | Проверка URL: 404 или OfferUnpublished (снято) | `--json`, `--delay`, `--no-progress`, `--timeout` |
 
 ---
 
