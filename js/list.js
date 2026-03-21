@@ -154,12 +154,90 @@ function sortApartments(sortValue) {
     applyListFilter(sorted);
 }
 
+var ROOMS_FILTER_STORAGE_KEY = 'cian_rooms_visible';
+
+function mapAptToRoomFilterKey(apt) {
+    var n = getRoomsCount(apt);
+    if (n === 0) return '0';
+    if (n >= 4) return '4';
+    return String(n);
+}
+
+function getDefaultRoomFilterState() {
+    return { '0': true, '1': true, '2': true, '3': true, '4': true };
+}
+
+function getRoomFilterState() {
+    try {
+        var s = localStorage.getItem(ROOMS_FILTER_STORAGE_KEY);
+        if (s) {
+            var o = JSON.parse(s);
+            var def = getDefaultRoomFilterState();
+            Object.keys(def).forEach(function (k) {
+                if (typeof o[k] === 'undefined') o[k] = def[k];
+            });
+            return o;
+        }
+    } catch (e) {}
+    return getDefaultRoomFilterState();
+}
+
+function saveRoomFilterStateFromDom() {
+    var wrap = document.getElementById('rooms-filter');
+    if (!wrap) return;
+    var o = {};
+    wrap.querySelectorAll('input[type="checkbox"][data-rooms]').forEach(function (cb) {
+        o[cb.getAttribute('data-rooms')] = cb.checked;
+    });
+    try {
+        localStorage.setItem(ROOMS_FILTER_STORAGE_KEY, JSON.stringify(o));
+    } catch (e) {}
+}
+
+function apartmentMatchesRoomFilter(apt) {
+    var key = mapAptToRoomFilterKey(apt);
+    return getRoomFilterState()[key] === true;
+}
+
+function filterApartmentsByRooms(apartments) {
+    return (apartments || []).filter(apartmentMatchesRoomFilter);
+}
+
+function onRoomsFilterChanged() {
+    saveRoomFilterStateFromDom();
+    var pool = window.APARTMENTS || [];
+    if (typeof setMapApartmentMarkers === 'function') {
+        setMapApartmentMarkers(filterApartmentsByRooms(pool));
+    }
+    applyListFilter(window._lastSortedApartments || pool.slice());
+}
+
+function syncRoomsFilterCheckboxesFromStorage() {
+    var wrap = document.getElementById('rooms-filter');
+    if (!wrap) return;
+    var state = getRoomFilterState();
+    wrap.querySelectorAll('input[type="checkbox"][data-rooms]').forEach(function (cb) {
+        var k = cb.getAttribute('data-rooms');
+        cb.checked = state[k] !== false;
+    });
+}
+
+function initRoomsFilter() {
+    var wrap = document.getElementById('rooms-filter');
+    if (!wrap) return;
+    syncRoomsFilterCheckboxesFromStorage();
+    wrap.querySelectorAll('input[type="checkbox"][data-rooms]').forEach(function (cb) {
+        cb.addEventListener('change', onRoomsFilterChanged);
+    });
+}
+
 function applyListFilter(sortedApartments) {
     window._lastSortedApartments = sortedApartments;
     var query = (document.getElementById('list-search-input').value || '').trim().toLowerCase();
     var list = query
         ? sortedApartments.filter(function (apt) { return getCardSearchText(apt).indexOf(query) !== -1; })
-        : sortedApartments;
+        : sortedApartments.slice();
+    list = list.filter(apartmentMatchesRoomFilter);
     renderList(list, list.length);
 }
 
@@ -319,4 +397,5 @@ function initList() {
     }
 
     sortApartments(sortSelect ? sortSelect.value : 'rating-desc');
+    initRoomsFilter();
 }

@@ -22,22 +22,79 @@ function saveLayer(name) {
     try { localStorage.setItem('map_tile_layer', name); } catch(e) {}
 }
 
-function createIcon(rating) {
-    const isClosed = rating === 4;
-    const c = getRatingColor(rating);
-    const style = isClosed
-        ? 'background:rgba(156,163,175,0.45);width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,0.6);box-shadow:0 1px 3px rgba(0,0,0,0.2);'
-        : 'background:' + c + ';width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);';
+/** Число комнат для подписи в маркере (как в list.js getRoomsCount). */
+function getRoomsCountForMarker(apt) {
+    if (typeof getRoomsCount === 'function') return getRoomsCount(apt);
+    var t = (apt && apt.title || '').toLowerCase();
+    if (/1-комн|1-комнатн|однокомнатн/.test(t)) return 1;
+    if (/2-комн|2-комнатн|двухкомнатн|двух комн/.test(t)) return 2;
+    if (/3-комн|3-комнатн|трёхкомнатн|трехкомнатн/.test(t)) return 3;
+    if (/4-комн|4-комнатн|многокомнатн/.test(t)) return 4;
+    return 0;
+}
+
+function roomsLabelForMarker(n) {
+    if (n >= 4) return '4+';
+    if (n >= 1) return String(n);
+    return '?';
+}
+
+function createIcon(rating, apt) {
+    var isClosed = rating === 4;
+    var c = getRatingColor(rating);
+    var n = apt ? getRoomsCountForMarker(apt) : 0;
+    var label = roomsLabelForMarker(n);
+    var size = 26;
+    var half = size / 2;
+    var bg = isClosed ? 'rgba(156,163,175,0.45)' : c;
+    var border = isClosed ? '2px solid rgba(255,255,255,0.6)' : '2px solid #fff';
+    var color = isClosed ? '#374151' : '#fff';
+    var shadow = isClosed ? '0 1px 3px rgba(0,0,0,0.2)' : '0 2px 6px rgba(0,0,0,0.3)';
+    var inner =
+        'display:flex;align-items:center;justify-content:center;' +
+        'width:' + size + 'px;height:' + size + 'px;border-radius:50%;' +
+        'background:' + bg + ';border:' + border + ';box-shadow:' + shadow + ';' +
+        'color:' + color + ';font-size:11px;font-weight:700;line-height:1;' +
+        'font-family:system-ui,-apple-system,sans-serif;' +
+        (isClosed ? '' : 'text-shadow:0 1px 2px rgba(0,0,0,0.4);');
     return L.divIcon({
         className: 'custom-marker' + (isClosed ? ' marker-closed' : ''),
-        html: '<div style="' + style + '"></div>',
-        iconSize: [22, 22], iconAnchor: [11, 11]
+        html: '<div class="marker-apt-inner" style="' + inner + '">' + label + '</div>',
+        iconSize: [size, size],
+        iconAnchor: [half, half]
     });
 }
 
 function updateMarkerIcon(apt, rating) {
-    const m = markers.find(mr => mr._apt && mr._apt.url === apt.url);
-    if (m) m.setIcon(createIcon(rating));
+    var m = markers.find(function (mr) { return mr._apt && mr._apt.url === apt.url; });
+    if (m) m.setIcon(createIcon(rating, apt));
+}
+
+/** Перерисовать маркеры квартир (без метро). Вызывается при смене фильтра по комнатам. */
+function setMapApartmentMarkers(apartments) {
+    if (!map) return;
+    markers.forEach(function (m) {
+        map.removeLayer(m);
+    });
+    markers.length = 0;
+    (apartments || []).forEach(function (apt) {
+        if (apt.lat == null || apt.lon == null) return;
+        const rating = getRating(apt.url);
+        const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating, apt) }).addTo(map);
+        marker._apt = apt;
+        const aptId = (apt.url || '').match(/\/(\d+)\/?$/);
+        const code = aptId ? aptId[1] : '';
+        const area = apt.total_area ? apt.total_area + ' м²' : '';
+        const price = (apt.price || '').replace(/</g, '&lt;');
+        const parts = [code ? 'Код ' + code : '', area, price].filter(Boolean);
+        marker.bindPopup(parts.join(' · '));
+        marker.on('click', function () {
+            document.querySelectorAll('.apartment').forEach(el => el.classList.remove('highlighted'));
+            const el = document.querySelector('.apartment[data-url="' + apt.url.replace(/"/g, '\\"') + '"]');
+            if (el) { el.classList.add('highlighted'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        });
+        markers.push(marker);
+    });
 }
 
 function initMap(apartments) {
@@ -107,24 +164,7 @@ function initMap(apartments) {
     });
     new VisibilitySelect().addTo(map);
 
-    apartments.forEach((apt) => {
-        if (apt.lat == null || apt.lon == null) return;
-        const rating = getRating(apt.url);
-        const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating) }).addTo(map);
-        marker._apt = apt;
-        const aptId = (apt.url || '').match(/\/(\d+)\/?$/);
-        const code = aptId ? aptId[1] : '';
-        const area = apt.total_area ? apt.total_area + ' м²' : '';
-        const price = (apt.price || '').replace(/</g, '&lt;');
-        const parts = [code ? 'Код ' + code : '', area, price].filter(Boolean);
-        marker.bindPopup(parts.join(' · '));
-        marker.on('click', function () {
-            document.querySelectorAll('.apartment').forEach(el => el.classList.remove('highlighted'));
-            const el = document.querySelector('.apartment[data-url="' + apt.url.replace(/"/g, '\\"') + '"]');
-            if (el) { el.classList.add('highlighted'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-        });
-        markers.push(marker);
-    });
+    setMapApartmentMarkers(apartments);
 
     // Станции метро — отдельный слой, метки по цвету линии
     const metroStations = window.METRO_SPB || [];

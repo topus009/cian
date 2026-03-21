@@ -1,7 +1,7 @@
-/* Маркеры на карте Leaflet */
+/* Маркеры на карте Leaflet (кружок + число комнат) */
 .custom-marker { background: transparent; border: none; }
-.custom-marker div { transition: transform 0.2s; }
-.custom-marker div:hover { transform: scale(1.15); }
+.custom-marker .marker-apt-inner { transition: transform 0.2s; user-select: none; }
+.custom-marker .marker-apt-inner:hover { transform: scale(1.12); }
 
 /* Станции метро — маленькие кружки по цвету линии */
 .metro-marker { background: transparent; border: none; }

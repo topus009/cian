@@ -56,6 +56,16 @@
                 </optgroup>
             </select>
         </div>
+        <div class="rooms-filter" id="rooms-filter" role="group" aria-label="Фильтр по комнатности">
+            <span class="rooms-filter-label">Комнаты:</span>
+            <div class="rooms-filter-checks">
+                <label class="rooms-filter-item"><input type="checkbox" data-rooms="1" checked><span>1</span></label>
+                <label class="rooms-filter-item"><input type="checkbox" data-rooms="2" checked><span>2</span></label>
+                <label class="rooms-filter-item"><input type="checkbox" data-rooms="3" checked><span>3</span></label>
+                <label class="rooms-filter-item"><input type="checkbox" data-rooms="4" checked><span>4+</span></label>
+                <label class="rooms-filter-item"><input type="checkbox" data-rooms="0" checked><span>?</span></label>
+            </div>
+        </div>
         </div>
         <div class="list-cards" id="list-cards"></div>
     </div>
@@ -108,7 +118,8 @@
             var idsToHide = mode === 'all' ? [] : (mode === 'visible_plus_newly' ? hiddenBase : hiddenFull);
             window.APARTMENTS = idsToHide.length ? full.filter(function (a) { return idsToHide.indexOf(getId(a)) === -1; }) : full;
             window.CIAN_VISIBILITY_MODE = mode;
-            initMap(window.APARTMENTS);
+            var forMap = filterApartmentsByRooms(window.APARTMENTS);
+            initMap(forMap);
             initGallery();
             initList();
         })();
