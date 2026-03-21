@@ -100,19 +100,21 @@ python scripts/sync_cian_photos.py
 
 ### Проверка «живых» объявлений (снято / 404)
 
-Скрипт **`scripts/check_cian_offers_live.py`** обходит все уникальные URL из `data/apartments.json`:
+Скрипт **`scripts/check_cian_offers_live.py`** обходит все уникальные URL из `data/apartments.json` (**один GET на квартиру**). Проверки:
 
-- **HTTP 404** — объявление удалено с Циан.
-- **HTTP 200** + в HTML есть **`data-name="OfferUnpublished"`** — «Объявление снято с публикации».
+1. **HTTP 404** — объявление удалено с Циан.
+2. **HTTP 200** + в HTML **`data-name="OfferUnpublished"`** — «Объявление снято с публикации».
+3. Для **живой** страницы (не 404, не снято): блоки **`data-name="OfferSummaryInfoItem"`** — если подпись **«Газоснабжение»**, значение вроде «Центральное» попадает в список **с газом**; «Нет», «Отсутствует» и т.п. — нет.
 
-В консоли выводится прогресс в виде полоски и счётчика **`текущий / всего`** квартир (не проценты).
+В консоли — прогресс **`текущий / всего`** и краткий статус строки (в т.ч. `OK, газ: …`).
 
 ```bash
 cd "C:\Users\sj_89\Desktop\cian"
 python scripts/check_cian_offers_live.py
-python scripts/check_cian_offers_live.py --json          # результат JSON в stdout, прогресс в stderr
-python scripts/check_cian_offers_live.py --delay 1.0     # пауза между запросами
-python scripts/check_cian_offers_live.py --no-progress   # без строки прогресса
+python scripts/check_cian_offers_live.py --json          # + поля with_gas_supply, ids_with_gas
+python scripts/check_cian_offers_live.py --delay 1.0
+python scripts/check_cian_offers_live.py --no-progress
+python scripts/check_cian_offers_live.py --skip-gas      # только 404 и снятие, без разбора газа
 ```
 
 Зависимости: `pip install requests beautifulsoup4`. При блокировке/капче Циан обычный GET может врать — тогда нужен браузер (Selenium).
@@ -217,7 +219,7 @@ python scripts/create_map_cian.py
 | `sync_cian_photos.py` | Синхронизирует photos[] с файлами на диске | нет |
 | `refresh_old_photos_and_remove.py` | Перекачивает фото старых квартир | нет |
 | `parse_metro_spb.py` | Парсит таблицу метро → metro_spb.json | [файл.html] или --fetch |
-| `check_cian_offers_live.py` | Проверка URL: 404 или OfferUnpublished (снято) | `--json`, `--delay`, `--no-progress`, `--timeout` |
+| `check_cian_offers_live.py` | 404, снятие (OfferUnpublished), газ (OfferSummaryInfoItem) | `--json`, `--skip-gas`, `--delay`, `--no-progress`, `--timeout` |
 
 ---
 

@@ -44,11 +44,12 @@
 
 ## Проверка объявлений на Циан (снято / 404)
 
-Скрипт `scripts/check_cian_offers_live.py` проходит по всем URL из `data/apartments.json`: **404** — объявления нет; в HTML блок **`data-name="OfferUnpublished"`** — снято с публикации. В консоли показывается прогресс «текущий / всего» квартир.
+Скрипт `scripts/check_cian_offers_live.py` проходит по всем URL из `data/apartments.json` (один запрос на квартиру): **404**, снятие (**`OfferUnpublished`**), для активных объявлений — **газ** по блокам **`OfferSummaryInfoItem`** (строка «Газоснабжение»). Прогресс в консоли «текущий / всего».
 
 ```bash
 python scripts/check_cian_offers_live.py
 python scripts/check_cian_offers_live.py --json
+python scripts/check_cian_offers_live.py --skip-gas   # без проверки газа
 ```
 
 Подробнее — в `.cursor/rules/cian-operations.md`.
