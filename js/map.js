@@ -29,11 +29,13 @@ function getRoomsCountForMarker(apt) {
     if (/1-комн|1-комнатн|однокомнатн/.test(t)) return 1;
     if (/2-комн|2-комнатн|двухкомнатн|двух комн/.test(t)) return 2;
     if (/3-комн|3-комнатн|трёхкомнатн|трехкомнатн/.test(t)) return 3;
+    if (/5-комн|5-комнатн|пятикомнатн|пяти-комн|пяти\s*комн/.test(t)) return 5;
     if (/4-комн|4-комнатн|многокомнатн/.test(t)) return 4;
     return 0;
 }
 
 function roomsLabelForMarker(n) {
+    if (n >= 5) return '5';
     if (n >= 4) return '4+';
     if (n >= 1) return String(n);
     return '?';
