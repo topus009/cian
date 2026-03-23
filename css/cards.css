@@ -109,5 +109,6 @@
     .apartment .card-rating-row { margin-top: 2px; gap: 4px 6px; }
     .apartment .card-rating-row .rating-buttons { margin: 0; }
     .apartment .card-rating-row .rating-info { display: none; }
-    .apartment .card-rating-row .btn-cian-card { font-size: 10px; padding: 2px 6px; }
+    .apartment .card-rating-row .btn-cian-card,
+    .apartment .card-rating-row .btn-avito-card { font-size: 10px; padding: 2px 6px; }
 }

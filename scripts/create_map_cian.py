@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Читает data/apartments.json, добавляет разброс координат при дубликатах,
+Читает data/apartments.json (Циан) и data/apartments_avito.json (Авито),
+склеивает в один список, добавляет разброс координат при дубликатах,
 записывает data/apartments.js (window.APARTMENTS) для карты.
+
+У записей Циан поле source = 'cian' (подставляется, если отсутствует).
 Запуск из корня: python scripts/create_map_cian.py
 """
 import json
@@ -12,6 +15,7 @@ from collections import defaultdict
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(SCRIPT_DIR)
 JSON_PATH = os.path.join(ROOT, 'data', 'apartments.json')
+AVITO_JSON_PATH = os.path.join(ROOT, 'data', 'apartments_avito.json')
 OUT_JS = os.path.join(ROOT, 'data', 'apartments.js')
 
 
@@ -33,12 +37,23 @@ def jitter_coords(apartments):
 
 def main():
     with open(JSON_PATH, 'r', encoding='utf-8') as f:
-        apartments = json.load(f)
+        cian = json.load(f)
+    for a in cian:
+        a.setdefault('source', 'cian')
+    avito = []
+    if os.path.isfile(AVITO_JSON_PATH):
+        with open(AVITO_JSON_PATH, 'r', encoding='utf-8') as f:
+            avito = json.load(f)
+        for a in avito:
+            a['source'] = 'avito'
+    apartments = cian + avito
     apartments = jitter_coords(apartments)
     js_content = 'window.APARTMENTS = ' + json.dumps(apartments, ensure_ascii=False) + ';\n'
     with open(OUT_JS, 'w', encoding='utf-8') as f:
         f.write(js_content)
-    print(f"Записано {OUT_JS} с {len(apartments)} квартирами.")
+    print(
+        f"Записано {OUT_JS}: циан {len(cian)}, авито {len(avito)}, всего {len(apartments)}."
+    )
 
 
 if __name__ == '__main__':

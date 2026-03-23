@@ -9,7 +9,17 @@ function getBuildYear(apt) {
 }
 
 function formatTitleRooms(apt) {
-    const t = (apt.title || '').toLowerCase();
+    const raw = apt.title || '';
+    var av = raw.match(/^(\d)-к\.\s*квартир/i);
+    if (av) {
+        var n = parseInt(av[1], 10);
+        if (n === 1) return 'Однокомнатная';
+        if (n === 2) return 'Двухкомнатная';
+        if (n === 3) return 'Трёхкомнатная';
+        if (n >= 5) return 'Пятикомнатная';
+        if (n >= 4) return 'Многокомнатная';
+    }
+    const t = raw.toLowerCase();
     if (/1-комн|1-комнатн|однокомнатн/.test(t)) return 'Однокомнатная';
     if (/2-комн|2-комнатн|двухкомнатн|двух комн/.test(t)) return 'Двухкомнатная';
     if (/3-комн|3-комнатн|трёхкомнатн|трехкомнатн/.test(t)) return 'Трёхкомнатная';
@@ -19,7 +29,10 @@ function formatTitleRooms(apt) {
 }
 
 function getRoomsCount(apt) {
-    const t = (apt.title || '').toLowerCase();
+    const raw = apt.title || '';
+    var av = raw.match(/^(\d)-к\.\s*квартир/i);
+    if (av) return Math.min(parseInt(av[1], 10), 5);
+    const t = raw.toLowerCase();
     if (/1-комн|1-комнатн|однокомнатн/.test(t)) return 1;
     if (/2-комн|2-комнатн|двухкомнатн|двух комн/.test(t)) return 2;
     if (/3-комн|3-комнатн|трёхкомнатн|трехкомнатн/.test(t)) return 3;
@@ -48,7 +61,8 @@ function getCardSearchText(apt) {
     const perSqm = apt.price_per_sqm != null ? String(apt.price_per_sqm) : '';
     const aptId = getAptId(apt);
     const floor = apt.floor || '';
-    return [apt.title, apt.price, apt.address, year, area, perSqm, aptId, floor, (apt.metro || []).join(' ')].filter(Boolean).join(' ').toLowerCase();
+    var srcTag = apt.source === 'avito' ? 'авито' : 'циан';
+    return [apt.title, apt.price, apt.address, year, area, perSqm, aptId, floor, (apt.metro || []).join(' '), srcTag].filter(Boolean).join(' ').toLowerCase();
 }
 
 function formatPricePerSqm(value) {
@@ -287,6 +301,10 @@ function renderList(apartmentsToRender, totalCount) {
         const floorStr = apt.floor ? ', этаж ' + apt.floor : '';
         const pricePerSqm = apt.price_per_sqm != null ? formatPricePerSqm(apt.price_per_sqm) : '';
         const aptId = getAptId(apt);
+        var listingLabel = (apt.source === 'avito') ? 'Авито' : 'Циан';
+        var linkSourceClass = (apt.source === 'avito')
+            ? 'btn-cian-card btn-listing-source btn-avito-card'
+            : 'btn-cian-card btn-listing-source';
 
         var styleYear = colorYear ? ' style="color:' + colorYear + '"' : '';
         var styleArea = colorArea ? ' style="color:' + colorArea + '"' : '';
@@ -319,7 +337,7 @@ function renderList(apartmentsToRender, totalCount) {
             '<button class="rating-btn closed ' + (rating === 4 ? 'active' : '') + '" data-rating="4" data-url="' + apt.url + '" title="Дорога закрыта">🚫</button>' +
             '</div>' +
             '<span class="rating-info" style="color:' + getRatingColor(rating) + '">' + getRatingText(rating) + '</span>' +
-            '<a class="btn-cian-card" href="' + (apt.url || '#').replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">Циан</a>' +
+            '<a class="' + linkSourceClass + '" href="' + (apt.url || '#').replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">' + listingLabel + '</a>' +
             '</div>';
 
         const wrap = div.querySelector('.preview-wrap');
@@ -344,7 +362,7 @@ function renderList(apartmentsToRender, totalCount) {
         });
 
         div.addEventListener('click', function (e) {
-            if (e.target.closest('.preview-wrap') || e.target.closest('.rating-btn') || e.target.closest('.btn-cian-card')) return;
+            if (e.target.closest('.preview-wrap') || e.target.closest('.rating-btn') || e.target.closest('.btn-listing-source')) return;
             if (rating === 4) {
                 e.preventDefault();
                 setRating(apt.url, 0);

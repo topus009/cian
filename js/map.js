@@ -25,7 +25,10 @@ function saveLayer(name) {
 /** Число комнат для подписи в маркере (как в list.js getRoomsCount). */
 function getRoomsCountForMarker(apt) {
     if (typeof getRoomsCount === 'function') return getRoomsCount(apt);
-    var t = (apt && apt.title || '').toLowerCase();
+    var t0 = apt && apt.title || '';
+    var av = t0.match(/^(\d)-к\.\s*квартир/i);
+    if (av) return Math.min(parseInt(av[1], 10), 5);
+    var t = t0.toLowerCase();
     if (/1-комн|1-комнатн|однокомнатн/.test(t)) return 1;
     if (/2-комн|2-комнатн|двухкомнатн|двух комн/.test(t)) return 2;
     if (/3-комн|3-комнатн|трёхкомнатн|трехкомнатн/.test(t)) return 3;
@@ -48,19 +51,21 @@ function createIcon(rating, apt) {
     var label = roomsLabelForMarker(n);
     var size = 26;
     var half = size / 2;
+    var isAvito = apt && apt.source === 'avito';
+    var radius = isAvito ? '5px' : '50%';
     var bg = isClosed ? 'rgba(156,163,175,0.45)' : c;
     var border = isClosed ? '2px solid rgba(255,255,255,0.6)' : '2px solid #fff';
     var color = isClosed ? '#374151' : '#fff';
     var shadow = isClosed ? '0 1px 3px rgba(0,0,0,0.2)' : '0 2px 6px rgba(0,0,0,0.3)';
     var inner =
         'display:flex;align-items:center;justify-content:center;' +
-        'width:' + size + 'px;height:' + size + 'px;border-radius:50%;' +
+        'width:' + size + 'px;height:' + size + 'px;border-radius:' + radius + ';' +
         'background:' + bg + ';border:' + border + ';box-shadow:' + shadow + ';' +
         'color:' + color + ';font-size:11px;font-weight:700;line-height:1;' +
         'font-family:system-ui,-apple-system,sans-serif;' +
         (isClosed ? '' : 'text-shadow:0 1px 2px rgba(0,0,0,0.4);');
     return L.divIcon({
-        className: 'custom-marker' + (isClosed ? ' marker-closed' : ''),
+        className: 'custom-marker' + (isClosed ? ' marker-closed' : '') + (isAvito ? ' marker-avito' : ''),
         html: '<div class="marker-apt-inner" style="' + inner + '">' + label + '</div>',
         iconSize: [size, size],
         iconAnchor: [half, half]

@@ -15,7 +15,9 @@ function openGallery(apt, photoIndex) {
     const yearStr = year ? year + ' г.' : '';
     const parts = [area, price, yearStr].filter(Boolean);
     document.getElementById('gallery-subtitle').textContent = parts.join(' · ');
-    document.getElementById('gallery-link').href = apt.url || '#';
+    var gl = document.getElementById('gallery-link');
+    gl.href = apt.url || '#';
+    gl.textContent = (apt.source === 'avito') ? 'Открыть на Авито' : 'Открыть на Циан';
     document.getElementById('gallery-modal').classList.add('show');
     showGalleryPhoto(photos, currentPhotoIdx);
 }

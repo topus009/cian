@@ -1,7 +1,8 @@
-/* Маркеры на карте Leaflet (кружок + число комнат) */
+/* Маркеры на карте Leaflet: Циан — круг, Авито — квадрат (удобнее для цифры комнат) */
 .custom-marker { background: transparent; border: none; }
-.custom-marker .marker-apt-inner { transition: transform 0.2s; user-select: none; }
+.custom-marker .marker-apt-inner { transition: transform 0.2s; user-select: none; box-sizing: border-box; }
 .custom-marker .marker-apt-inner:hover { transform: scale(1.12); }
+.custom-marker.marker-avito .marker-apt-inner { border-radius: 5px !important; }
 
 /* Станции метро — маленькие кружки по цвету линии */
 .metro-marker { background: transparent; border: none; }

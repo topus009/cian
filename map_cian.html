@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Избранные квартиры Циан — Санкт-Петербург</title>
+    <title>Избранные квартиры — Циан и Авито, Санкт-Петербург</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
     <link rel="stylesheet" href="./css/base.css">
@@ -112,11 +112,23 @@
             var full = window.APARTMENTS || [];
             var mode;
             try { mode = localStorage.getItem('cian_visibility_mode') || 'visible'; } catch (e) { mode = 'visible'; }
-            function getId(a) { var m = (a.url || '').match(/\/(\d+)\/?$/); return m ? m[1] : ''; }
+            /** Скрытие по списку — только объявления Циан (ID из sale/flat/…). Авито не режем. */
+            function getCianFlatId(a) {
+                var u = a.url || '';
+                if (u.indexOf('cian.ru') === -1) return null;
+                var m = u.match(/sale\/flat\/(\d+)/);
+                return m ? m[1] : null;
+            }
             var hiddenFull = window.APARTMENT_HIDDEN_IDS || [];
             var hiddenBase = window.APARTMENT_HIDDEN_IDS_BASE || [];
             var idsToHide = mode === 'all' ? [] : (mode === 'visible_plus_newly' ? hiddenBase : hiddenFull);
-            window.APARTMENTS = idsToHide.length ? full.filter(function (a) { return idsToHide.indexOf(getId(a)) === -1; }) : full;
+            window.APARTMENTS = idsToHide.length
+                ? full.filter(function (a) {
+                    var id = getCianFlatId(a);
+                    if (!id) return true;
+                    return idsToHide.indexOf(id) === -1;
+                })
+                : full;
             window.CIAN_VISIBILITY_MODE = mode;
             var forMap = filterApartmentsByRooms(window.APARTMENTS);
             initMap(forMap);

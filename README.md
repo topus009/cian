@@ -1,6 +1,30 @@
-# Избранные квартиры Циан — карта (Санкт-Петербург)
+# Избранные квартиры — Циан и Авито, карта (Санкт-Петербург)
 
-Карта избранных объявлений с Циан на OpenStreetMap: сайдбар с превью, рейтингом, сортировкой; по клику на превью — полноэкранный слайдер фото и описание.
+Карта избранных объявлений на OpenStreetMap: **Циан** (круглые маркеры) и **Авито** (квадратные маркеры с той же цифрой комнат). В карточке и в галерее ссылка ведёт на нужный сайт («Циан» / «Авито»). Данные Авито — отдельный файл `data/apartments_avito.json`, при сборке склеиваются с `apartments.json` в `data/apartments.js`.
+
+## Авито (избранное)
+
+1. Ссылки — в `data/urls_avito.txt` (по одному URL на строку).
+2. Скачивание через **Chrome + Selenium** (как у Циан), результат — `data/apartments_avito.json`, фото в `data/avito/<id>_files/`, копия HTML в `data/avito_html/<id>.html`.
+
+```bash
+pip install selenium requests beautifulsoup4
+python scripts/fetch_avito_offers_selenium.py          # полный прогон
+python scripts/fetch_avito_offers_selenium.py --resume # докачать только отсутствующие id
+python scripts/fetch_avito_offers_selenium.py --no-images   # без загрузки фото
+# Несколько Chrome параллельно (отдельный процесс на воркер; капчу так не решить — потом --workers 1):
+python scripts/fetch_avito_offers_selenium.py --workers 3 --headless
+```
+
+После изменений данных (или сам скрипт в конце вызывает это):
+
+```bash
+python scripts/create_map_cian.py
+```
+
+Режим «Только видимые» / `hidden_ids.js` действует **только на Циан**; Авито этим списком не режется.
+
+Парсинг HTML живёт в `scripts/avito_offer_parse.py` (используется только Selenium-скриптом).
 
 ## Быстрый старт
 
