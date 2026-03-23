@@ -18,6 +18,7 @@ function openGallery(apt, photoIndex) {
     var gl = document.getElementById('gallery-link');
     gl.href = apt.url || '#';
     gl.textContent = (apt.source === 'avito') ? 'Открыть на Авито' : 'Открыть на Циан';
+    gl.classList.toggle('modal-link-avito', apt.source === 'avito');
     document.getElementById('gallery-modal').classList.add('show');
     showGalleryPhoto(photos, currentPhotoIdx);
 }

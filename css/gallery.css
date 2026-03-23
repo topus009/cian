@@ -60,4 +60,10 @@
 #gallery-modal .modal-link.modal-link-footer {
     flex-shrink: 0; padding: 6px 12px; background: #0468FF; color: #fff; text-decoration: none; border-radius: 4px; font-size: 12px;
 }
-#gallery-modal .modal-link.modal-link-footer:hover { background: #0356d0; }
+#gallery-modal .modal-link.modal-link-footer:hover { background: #0356d0; color: #fff; }
+#gallery-modal .modal-link.modal-link-footer.modal-link-avito {
+    background: #198754;
+}
+#gallery-modal .modal-link.modal-link-footer.modal-link-avito:hover {
+    background: #157347;
+}
