@@ -49,6 +49,70 @@ function getFloorNumber(apt) {
     return m ? parseInt(m[1], 10) : 0;
 }
 
+/**
+ * Парсинг «этаж / всего» из поля floor: "4/9", "4 / 17", "4 из 9".
+ * @returns {{ cur: number, total: number } | null}
+ */
+function parseFloorParts(apt) {
+    var s = (apt && apt.floor ? apt.floor : '').toString().trim();
+    if (!s) return null;
+    var m = s.match(/^(\d+)\s*\/\s*(\d+)/);
+    if (m) return { cur: parseInt(m[1], 10), total: parseInt(m[2], 10) };
+    m = s.match(/^(\d+)\s+из\s+(\d+)/i);
+    if (m) return { cur: parseInt(m[1], 10), total: parseInt(m[2], 10) };
+    return null;
+}
+
+/**
+ * Положение квартиры в доме: текущий этаж / этажность (0…1).
+ * 5-й из 17 выше по «качеству этажа», чем 5-й из 5. Без второго числа — null (не сравниваем с долей).
+ */
+function getFloorHeightRatio(apt) {
+    var p = parseFloorParts(apt);
+    if (!p || p.total < 1 || p.cur < 1) return null;
+    if (p.cur > p.total) return null;
+    return p.cur / p.total;
+}
+
+/**
+ * Насколько «удачна» доля этажа в доме: пик у середины (≈40–50% высоты), не монотонно «чем выше — тем лучше».
+ * Нижняя треть и верх/крыша хуже «золотой середины» (типичные плюсы 3–7 эт. в среднем доме).
+ */
+function floorRatioToIdealT(ratio) {
+    if (ratio == null || ratio <= 0 || ratio > 1) return null;
+    var peak = 0.45;
+    var half = 0.42;
+    var d = Math.abs(ratio - peak);
+    var t = 1 - Math.min(1, d / half);
+    return Math.max(0, Math.min(1, t));
+}
+
+/**
+ * 0…1: идеальность этажа с учётом доли в доме; штраф за 1-й и последний этаж.
+ */
+function getFloorIdealScore(apt) {
+    var r = getFloorHeightRatio(apt);
+    if (r == null) return null;
+    var t = floorRatioToIdealT(r);
+    var p = parseFloorParts(apt);
+    if (p && p.total > 1) {
+        if (p.cur === p.total) t *= 0.88;
+        if (p.cur === 1) t *= 0.82;
+    }
+    return Math.max(0, Math.min(1, t));
+}
+
+/**
+ * Для сортировки по этажу: сначала «идеальный» балл по доле; иначе этаж / max в списке.
+ */
+function getFloorSortMetric(apt, maxFloorInList) {
+    var f = getFloorIdealScore(apt);
+    if (f != null) return f;
+    var n = getFloorNumber(apt);
+    if (n <= 0 || !maxFloorInList || maxFloorInList < 1) return 0;
+    return n / maxFloorInList;
+}
+
 function getAptId(apt) {
     var url = apt.url || '';
     var m = url.match(/\/(\d+)\/?$/);
@@ -73,7 +137,7 @@ function formatPricePerSqm(value) {
 
 /** Статистика по всему списку квартир для цветовой индикации (зелёный — лучше, красный — хуже) */
 function getParamStats(apartments) {
-    var years = [], areas = [], rooms = [], prices = [], perSqm = [], floors = [];
+    var years = [], areas = [], rooms = [], prices = [], perSqm = [], floorIdeals = [];
     (apartments || []).forEach(function (apt) {
         var y = parseInt(getBuildYear(apt), 10);
         if (y && y > 1900) years.push(y);
@@ -83,8 +147,8 @@ function getParamStats(apartments) {
         var p = parseInt((apt.price || '').replace(/\D/g, ''), 10);
         if (p > 0) prices.push(p);
         if (apt.price_per_sqm != null && apt.price_per_sqm > 0) perSqm.push(Number(apt.price_per_sqm));
-        var fl = getFloorNumber(apt);
-        if (fl > 0) floors.push(fl);
+        var fi = getFloorIdealScore(apt);
+        if (fi != null) floorIdeals.push(fi);
     });
     function minMax(arr) {
         if (!arr.length) return { min: 0, max: 1 };
@@ -96,7 +160,8 @@ function getParamStats(apartments) {
         rooms: minMax(rooms),
         price: minMax(prices),
         price_per_sqm: minMax(perSqm),
-        floor: floors.length ? minMax(floors) : { min: 0, max: 0 }
+        /** Оценка «идеальности» этажа (середина дома лучше; штраф 1-й/последний) */
+        floor_ideal: floorIdeals.length ? minMax(floorIdeals) : { min: 0, max: 0 }
     };
 }
 
@@ -135,24 +200,42 @@ function manualRatingToT(r) {
 }
 
 /**
- * Суммарный балл: цена, ₽/м², площадь, этаж, год, комнаты (по 1) + ручной рейтинг (вес 2).
- * Все в диапазоне 0…1 по сравнению с остальными квартирами в списке.
+ * Веса для суммарного балла (после нормализации каждого признака в 0…1 по списку).
+ * Основной приоритет: цена → комнаты → площадь → цена/м² → этаж (минимум).
+ * Ручной рейтинг чуть ниже цены (ваш выбор); год — слабый; этаж — последний по силе влияния.
+ */
+var COMPOSITE_WEIGHTS = {
+    price: 5,
+    rooms: 4,
+    area: 6,
+    manual: 1,
+    price_per_sqm: 7,
+    build_year: 3,
+    floor: 2
+};
+
+/**
+ * Суммарный балл: взвешенная сумма нормализованных параметров (см. COMPOSITE_WEIGHTS).
  */
 function getCompositeScore(apt, stats) {
     stats = stats || getParamStats(window.APARTMENTS || []);
+    var W = COMPOSITE_WEIGHTS;
     var parts = [];
-    parts.push({ w: 2, t: manualRatingToT(getRating(apt.url)) });
     var priceNum = parseInt((apt.price || '').replace(/\D/g, ''), 10) || 0;
-    parts.push({ w: 1, t: normalizeParamT(priceNum, stats.price, false) });
-    var perSqm = apt.price_per_sqm != null ? Number(apt.price_per_sqm) : null;
-    parts.push({ w: 1, t: normalizeParamT(perSqm, stats.price_per_sqm, false) });
+    parts.push({ w: W.price, t: normalizeParamT(priceNum, stats.price, false) });
+    parts.push({ w: W.rooms, t: normalizeParamT(getRoomsCount(apt), stats.rooms, true) });
     var areaNum = parseFloat(String(apt.total_area || '').replace(',', '.'), 10);
-    parts.push({ w: 1, t: normalizeParamT(areaNum, stats.area, true) });
-    var fn = getFloorNumber(apt);
-    parts.push({ w: 1, t: fn > 0 ? normalizeParamT(fn, stats.floor, true) : 0.5 });
+    parts.push({ w: W.area, t: normalizeParamT(areaNum, stats.area, true) });
+    var perSqm = apt.price_per_sqm != null ? Number(apt.price_per_sqm) : null;
+    parts.push({ w: W.price_per_sqm, t: normalizeParamT(perSqm, stats.price_per_sqm, false) });
     var yn = parseInt(getBuildYear(apt), 10) || 0;
-    parts.push({ w: 1, t: yn > 1900 ? normalizeParamT(yn, stats.build_year, true) : 0.5 });
-    parts.push({ w: 1, t: normalizeParamT(getRoomsCount(apt), stats.rooms, true) });
+    parts.push({ w: W.build_year, t: yn > 1900 ? normalizeParamT(yn, stats.build_year, true) : 0.5 });
+    parts.push({ w: W.manual, t: manualRatingToT(getRating(apt.url)) });
+    var fi = getFloorIdealScore(apt);
+    parts.push({
+        w: W.floor,
+        t: fi != null ? normalizeParamT(fi, stats.floor_ideal, true) : 0.5
+    });
     var wsum = 0;
     var acc = 0;
     parts.forEach(function (p) {
@@ -200,8 +283,8 @@ function getMarkerOutlineForSortField(apt, field, stats, compositeRange) {
         var areaNum = parseFloat(String(apt.total_area || '').replace(',', '.'), 10);
         c = getParamColor(areaNum, stats.area, true);
     } else if (field === 'floor') {
-        var fn = getFloorNumber(apt);
-        c = fn > 0 ? getParamColor(fn, stats.floor, true) : null;
+        var fiM = getFloorIdealScore(apt);
+        c = fiM != null ? getParamColor(fiM, stats.floor_ideal, true) : null;
     } else if (field === 'build_year') {
         var yn = parseInt(getBuildYear(apt), 10) || 0;
         c = getParamColor(yn, stats.build_year, true);
@@ -256,8 +339,16 @@ function sortApartments(sortValue) {
             return num(a, b, function (x) { return (x.total_area != null ? parseFloat(String(x.total_area).replace(',', '.'), 10) : 0); });
         });
     } else if (field === 'floor') {
+        var maxFloor = 1;
+        apartments.forEach(function (a) {
+            maxFloor = Math.max(maxFloor, getFloorNumber(a));
+        });
         sorted.sort(function (a, b) {
-            return num(a, b, getFloorNumber) || (a.title || '').localeCompare(b.title || '');
+            return (
+                num(a, b, function (x) {
+                    return getFloorSortMetric(x, maxFloor);
+                }) || (a.title || '').localeCompare(b.title || '')
+            );
         });
     } else if (field === 'build_year') {
         sorted.sort(function (a, b) {
@@ -409,8 +500,9 @@ function renderList(apartmentsToRender, totalCount) {
         var colorRooms = getParamColor(roomsNum, stats.rooms, true);
         var colorPrice = getParamColor(priceNum, stats.price, false);
         var colorPerSqm = getParamColor(perSqmNum, stats.price_per_sqm, false);
-        var floorNum = getFloorNumber(apt);
-        var colorFloor = floorNum > 0 ? getParamColor(floorNum, stats.floor, true) : null;
+        var floorIdeal = getFloorIdealScore(apt);
+        var colorFloor =
+            floorIdeal != null ? getParamColor(floorIdeal, stats.floor_ideal, true) : null;
 
         const div = document.createElement('div');
         div.className = 'apartment' + (isRatingClosed(rating) ? ' rating-closed' : '');
