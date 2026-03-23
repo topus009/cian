@@ -78,15 +78,24 @@ function createIcon(rating, apt, outlineHex) {
     });
 }
 
+function getCompositeRangeForMap(field, stats) {
+    if (field !== 'composite') return null;
+    if (typeof window.getCompositeScoreRange === 'function') {
+        return window.getCompositeScoreRange(window.APARTMENTS || [], stats);
+    }
+    return null;
+}
+
 function updateMarkerIcon(apt, rating) {
     var m = markers.find(function (mr) { return mr._apt && mr._apt.url === apt.url; });
     if (!m) return;
     var sel = document.getElementById('list-sort-select');
     var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
     var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
+    var compositeRange = getCompositeRangeForMap(field, stats);
     var outline =
         typeof window.getMarkerOutlineForSortField === 'function'
-            ? window.getMarkerOutlineForSortField(apt, field, stats)
+            ? window.getMarkerOutlineForSortField(apt, field, stats, compositeRange)
             : '#ffffff';
     m.setIcon(createIcon(rating, apt, outline));
 }
@@ -97,13 +106,14 @@ function syncMapMarkerOutlines() {
     var sel = document.getElementById('list-sort-select');
     var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
     var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
+    var compositeRange = getCompositeRangeForMap(field, stats);
     markers.forEach(function (m) {
         if (!m._apt || m._isMetro) return;
         var apt = m._apt;
         var r = getRating(apt.url);
         var outline =
             typeof window.getMarkerOutlineForSortField === 'function'
-                ? window.getMarkerOutlineForSortField(apt, field, stats)
+                ? window.getMarkerOutlineForSortField(apt, field, stats, compositeRange)
                 : '#ffffff';
         m.setIcon(createIcon(r, apt, outline));
     });
@@ -120,12 +130,13 @@ function setMapApartmentMarkers(apartments) {
     var sel = document.getElementById('list-sort-select');
     var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
     var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
+    var compositeRange = getCompositeRangeForMap(field, stats);
     (apartments || []).forEach(function (apt) {
         if (apt.lat == null || apt.lon == null) return;
         const rating = getRating(apt.url);
         var outline =
             typeof window.getMarkerOutlineForSortField === 'function'
-                ? window.getMarkerOutlineForSortField(apt, field, stats)
+                ? window.getMarkerOutlineForSortField(apt, field, stats, compositeRange)
                 : '#ffffff';
         const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating, apt, outline) }).addTo(map);
         marker._apt = apt;

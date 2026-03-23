@@ -116,11 +116,70 @@ function getParamColor(value, range, higherIsBetter) {
     return '#dc3545';
 }
 
+/** 0…1: чем выше, тем лучше по параметру (как в карточках). */
+function normalizeParamT(value, range, higherIsBetter) {
+    if (value == null || value === '' || !range || range.min === range.max) return 0.5;
+    var t = (Number(value) - range.min) / (range.max - range.min);
+    if (isNaN(t)) return 0.5;
+    if (!higherIsBetter) t = 1 - t;
+    return Math.max(0, Math.min(1, t));
+}
+
+/** Ручная оценка 👍👎 → 0…1 (дорога закрыта = 0). */
+function manualRatingToT(r) {
+    if (r === 4) return 0;
+    if (r === 3) return 1;
+    if (r === 2) return 0.65;
+    if (r === 1) return 0.35;
+    return 0.5;
+}
+
+/**
+ * Суммарный балл: цена, ₽/м², площадь, этаж, год, комнаты (по 1) + ручной рейтинг (вес 2).
+ * Все в диапазоне 0…1 по сравнению с остальными квартирами в списке.
+ */
+function getCompositeScore(apt, stats) {
+    stats = stats || getParamStats(window.APARTMENTS || []);
+    var parts = [];
+    parts.push({ w: 2, t: manualRatingToT(getRating(apt.url)) });
+    var priceNum = parseInt((apt.price || '').replace(/\D/g, ''), 10) || 0;
+    parts.push({ w: 1, t: normalizeParamT(priceNum, stats.price, false) });
+    var perSqm = apt.price_per_sqm != null ? Number(apt.price_per_sqm) : null;
+    parts.push({ w: 1, t: normalizeParamT(perSqm, stats.price_per_sqm, false) });
+    var areaNum = parseFloat(String(apt.total_area || '').replace(',', '.'), 10);
+    parts.push({ w: 1, t: normalizeParamT(areaNum, stats.area, true) });
+    var fn = getFloorNumber(apt);
+    parts.push({ w: 1, t: fn > 0 ? normalizeParamT(fn, stats.floor, true) : 0.5 });
+    var yn = parseInt(getBuildYear(apt), 10) || 0;
+    parts.push({ w: 1, t: yn > 1900 ? normalizeParamT(yn, stats.build_year, true) : 0.5 });
+    parts.push({ w: 1, t: normalizeParamT(getRoomsCount(apt), stats.rooms, true) });
+    var wsum = 0;
+    var acc = 0;
+    parts.forEach(function (p) {
+        wsum += p.w;
+        acc += p.w * p.t;
+    });
+    return acc / wsum;
+}
+
+/** Min/max суммарного балла по списку (для цвета маркера и сортировки). */
+function getCompositeScoreRange(apartments, stats) {
+    stats = stats || getParamStats(apartments || []);
+    var scores = [];
+    (apartments || []).forEach(function (apt) {
+        scores.push(getCompositeScore(apt, stats));
+    });
+    if (!scores.length) return { min: 0, max: 1 };
+    return { min: Math.min.apply(null, scores), max: Math.max.apply(null, scores) };
+}
+window.getCompositeScoreRange = getCompositeScoreRange;
+
 /**
  * Цвет обводки маркера на карте по выбранному полю сортировки (как градация в карточке).
  * @param {object} stats — из getParamStats (передайте один раз на перерисовку маркеров).
+ * @param {object} [compositeRange] — для field=composite: min/max баллов (считать один раз на кадр).
  */
-function getMarkerOutlineForSortField(apt, field, stats) {
+function getMarkerOutlineForSortField(apt, field, stats, compositeRange) {
     stats = stats || getParamStats(window.APARTMENTS || []);
     if (field === 'rating') {
         var r = getRating(apt.url);
@@ -148,6 +207,10 @@ function getMarkerOutlineForSortField(apt, field, stats) {
         c = getParamColor(yn, stats.build_year, true);
     } else if (field === 'rooms') {
         c = getParamColor(getRoomsCount(apt), stats.rooms, true);
+    } else if (field === 'composite') {
+        var range = compositeRange || getCompositeScoreRange(window.APARTMENTS || [], stats);
+        var score = getCompositeScore(apt, stats);
+        c = getParamColor(score, range, true);
     }
     return c || '#ffffff';
 }
@@ -205,6 +268,15 @@ function sortApartments(sortValue) {
     } else if (field === 'rooms') {
         sorted.sort(function (a, b) {
             return num(a, b, getRoomsCount) || (a.title || '').localeCompare(b.title || '');
+        });
+    } else if (field === 'composite') {
+        var stComp = getParamStats(apartments);
+        sorted.sort(function (a, b) {
+            var sa = getCompositeScore(a, stComp);
+            var sb = getCompositeScore(b, stComp);
+            if (sa < sb) return -1 * dir;
+            if (sa > sb) return 1 * dir;
+            return (a.title || '').localeCompare(b.title || '');
         });
     }
     applyListFilter(sorted);
@@ -412,7 +484,7 @@ function renderList(apartmentsToRender, totalCount) {
                 if (newRating !== 0) btn.classList.add('active');
                 div.classList.toggle('rating-closed', isRatingClosed(newRating));
                 var sel = document.getElementById('list-sort-select');
-                if (sel && sel.value.indexOf('rating') === 0) sortApartments(sel.value);
+                if (sel && (sel.value.indexOf('rating') === 0 || sel.value.indexOf('composite') === 0)) sortApartments(sel.value);
                 else applyListFilter(window._lastSortedApartments || []);
                 updateMarkerIcon(apt, newRating);
             });
@@ -429,7 +501,7 @@ function renderList(apartmentsToRender, totalCount) {
                 div.classList.remove('rating-closed');
                 updateMarkerIcon(apt, 0);
                 var sel = document.getElementById('list-sort-select');
-                if (sel && sel.value.indexOf('rating') === 0) sortApartments(sel.value);
+                if (sel && (sel.value.indexOf('rating') === 0 || sel.value.indexOf('composite') === 0)) sortApartments(sel.value);
                 else applyListFilter(window._lastSortedApartments || []);
                 return;
             }
