@@ -114,8 +114,12 @@ function getFloorSortMetric(apt, maxFloorInList) {
 }
 
 function getAptId(apt) {
+    if (apt && apt.source === 'avito' && apt.avito_id) return String(apt.avito_id);
     var url = apt.url || '';
-    var m = url.match(/\/(\d+)\/?$/);
+    var clean = String(url).split('?')[0].replace(/\/+$/, '');
+    var m = clean.match(/_(\d+)$/);
+    if (m) return m[1];
+    m = clean.match(/\/(\d+)$/);
     return m ? m[1] : '';
 }
 
