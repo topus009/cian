@@ -44,7 +44,10 @@ function roomsLabelForMarker(n) {
     return '?';
 }
 
-function createIcon(rating, apt) {
+/**
+ * @param {string} [outlineHex] — цвет обводки по выбранной сортировке (#rgb); иначе белая.
+ */
+function createIcon(rating, apt, outlineHex) {
     var isClosed = rating === 4;
     var c = getRatingColor(rating);
     var n = apt ? getRoomsCountForMarker(apt) : 0;
@@ -54,7 +57,10 @@ function createIcon(rating, apt) {
     var isAvito = apt && apt.source === 'avito';
     var radius = isAvito ? '5px' : '50%';
     var bg = isClosed ? 'rgba(156,163,175,0.45)' : c;
-    var border = isClosed ? '2px solid rgba(255,255,255,0.6)' : '2px solid #fff';
+    var borderColor = outlineHex && outlineHex !== '#ffffff' ? outlineHex : null;
+    var border = borderColor
+        ? '3px solid ' + borderColor
+        : (isClosed ? '2px solid rgba(255,255,255,0.6)' : '2px solid #fff');
     var color = isClosed ? '#374151' : '#fff';
     var shadow = isClosed ? '0 1px 3px rgba(0,0,0,0.2)' : '0 2px 6px rgba(0,0,0,0.3)';
     var inner =
@@ -74,8 +80,35 @@ function createIcon(rating, apt) {
 
 function updateMarkerIcon(apt, rating) {
     var m = markers.find(function (mr) { return mr._apt && mr._apt.url === apt.url; });
-    if (m) m.setIcon(createIcon(rating, apt));
+    if (!m) return;
+    var sel = document.getElementById('list-sort-select');
+    var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
+    var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
+    var outline =
+        typeof window.getMarkerOutlineForSortField === 'function'
+            ? window.getMarkerOutlineForSortField(apt, field, stats)
+            : '#ffffff';
+    m.setIcon(createIcon(rating, apt, outline));
 }
+
+/** Обновить обводку всех маркеров квартир под текущую сортировку в сайдбаре. */
+function syncMapMarkerOutlines() {
+    if (!map) return;
+    var sel = document.getElementById('list-sort-select');
+    var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
+    var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
+    markers.forEach(function (m) {
+        if (!m._apt || m._isMetro) return;
+        var apt = m._apt;
+        var r = getRating(apt.url);
+        var outline =
+            typeof window.getMarkerOutlineForSortField === 'function'
+                ? window.getMarkerOutlineForSortField(apt, field, stats)
+                : '#ffffff';
+        m.setIcon(createIcon(r, apt, outline));
+    });
+}
+window.syncMapMarkerOutlines = syncMapMarkerOutlines;
 
 /** Перерисовать маркеры квартир (без метро). Вызывается при смене фильтра по комнатам. */
 function setMapApartmentMarkers(apartments) {
@@ -84,10 +117,17 @@ function setMapApartmentMarkers(apartments) {
         map.removeLayer(m);
     });
     markers.length = 0;
+    var sel = document.getElementById('list-sort-select');
+    var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
+    var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
     (apartments || []).forEach(function (apt) {
         if (apt.lat == null || apt.lon == null) return;
         const rating = getRating(apt.url);
-        const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating, apt) }).addTo(map);
+        var outline =
+            typeof window.getMarkerOutlineForSortField === 'function'
+                ? window.getMarkerOutlineForSortField(apt, field, stats)
+                : '#ffffff';
+        const marker = L.marker([apt.lat, apt.lon], { icon: createIcon(rating, apt, outline) }).addTo(map);
         marker._apt = apt;
         const aptId = (apt.url || '').match(/\/(\d+)\/?$/);
         const code = aptId ? aptId[1] : '';

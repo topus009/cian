@@ -73,7 +73,7 @@ function formatPricePerSqm(value) {
 
 /** Статистика по всему списку квартир для цветовой индикации (зелёный — лучше, красный — хуже) */
 function getParamStats(apartments) {
-    var years = [], areas = [], rooms = [], prices = [], perSqm = [];
+    var years = [], areas = [], rooms = [], prices = [], perSqm = [], floors = [];
     (apartments || []).forEach(function (apt) {
         var y = parseInt(getBuildYear(apt), 10);
         if (y && y > 1900) years.push(y);
@@ -83,6 +83,8 @@ function getParamStats(apartments) {
         var p = parseInt((apt.price || '').replace(/\D/g, ''), 10);
         if (p > 0) prices.push(p);
         if (apt.price_per_sqm != null && apt.price_per_sqm > 0) perSqm.push(Number(apt.price_per_sqm));
+        var fl = getFloorNumber(apt);
+        if (fl > 0) floors.push(fl);
     });
     function minMax(arr) {
         if (!arr.length) return { min: 0, max: 1 };
@@ -93,7 +95,8 @@ function getParamStats(apartments) {
         area: minMax(areas),
         rooms: minMax(rooms),
         price: minMax(prices),
-        price_per_sqm: minMax(perSqm)
+        price_per_sqm: minMax(perSqm),
+        floor: floors.length ? minMax(floors) : { min: 0, max: 0 }
     };
 }
 
@@ -112,6 +115,43 @@ function getParamColor(value, range, higherIsBetter) {
     if (t >= 0.33) return '#ffc107';
     return '#dc3545';
 }
+
+/**
+ * Цвет обводки маркера на карте по выбранному полю сортировки (как градация в карточке).
+ * @param {object} stats — из getParamStats (передайте один раз на перерисовку маркеров).
+ */
+function getMarkerOutlineForSortField(apt, field, stats) {
+    stats = stats || getParamStats(window.APARTMENTS || []);
+    if (field === 'rating') {
+        var r = getRating(apt.url);
+        if (r === 4) return '#4b5563';
+        if (r === 3) return '#155724';
+        if (r === 2) return '#b38600';
+        if (r === 1) return '#921925';
+        return '#f8f9fa';
+    }
+    var c = null;
+    if (field === 'price') {
+        var priceNum = parseInt((apt.price || '').replace(/\D/g, ''), 10) || 0;
+        c = getParamColor(priceNum, stats.price, false);
+    } else if (field === 'price_per_sqm') {
+        var perSqm = apt.price_per_sqm != null ? Number(apt.price_per_sqm) : null;
+        c = getParamColor(perSqm, stats.price_per_sqm, false);
+    } else if (field === 'area') {
+        var areaNum = parseFloat(String(apt.total_area || '').replace(',', '.'), 10);
+        c = getParamColor(areaNum, stats.area, true);
+    } else if (field === 'floor') {
+        var fn = getFloorNumber(apt);
+        c = fn > 0 ? getParamColor(fn, stats.floor, true) : null;
+    } else if (field === 'build_year') {
+        var yn = parseInt(getBuildYear(apt), 10) || 0;
+        c = getParamColor(yn, stats.build_year, true);
+    } else if (field === 'rooms') {
+        c = getParamColor(getRoomsCount(apt), stats.rooms, true);
+    }
+    return c || '#ffffff';
+}
+window.getMarkerOutlineForSortField = getMarkerOutlineForSortField;
 
 function sortApartments(sortValue) {
     var parts = (sortValue || 'rating-desc').split('-');
@@ -168,6 +208,20 @@ function sortApartments(sortValue) {
         });
     }
     applyListFilter(sorted);
+    scheduleSyncMapMarkerOutlines();
+}
+
+/** Сразу после смены сортировки обновить обводку маркеров на карте (без перезагрузки страницы). */
+function scheduleSyncMapMarkerOutlines() {
+    function run() {
+        var fn = typeof syncMapMarkerOutlines === 'function'
+            ? syncMapMarkerOutlines
+            : (typeof window !== 'undefined' && typeof window.syncMapMarkerOutlines === 'function'
+                ? window.syncMapMarkerOutlines
+                : null);
+        if (fn) fn();
+    }
+    setTimeout(run, 0);
 }
 
 var ROOMS_FILTER_STORAGE_KEY = 'cian_rooms_visible';
@@ -283,6 +337,8 @@ function renderList(apartmentsToRender, totalCount) {
         var colorRooms = getParamColor(roomsNum, stats.rooms, true);
         var colorPrice = getParamColor(priceNum, stats.price, false);
         var colorPerSqm = getParamColor(perSqmNum, stats.price_per_sqm, false);
+        var floorNum = getFloorNumber(apt);
+        var colorFloor = floorNum > 0 ? getParamColor(floorNum, stats.floor, true) : null;
 
         const div = document.createElement('div');
         div.className = 'apartment' + (isRatingClosed(rating) ? ' rating-closed' : '');
@@ -311,6 +367,7 @@ function renderList(apartmentsToRender, totalCount) {
         var styleRooms = colorRooms ? ' style="color:' + colorRooms + '"' : '';
         var stylePrice = colorPrice ? ' style="color:' + colorPrice + '"' : '';
         var stylePerSqm = colorPerSqm ? ' style="color:' + colorPerSqm + '"' : '';
+        var styleFloor = colorFloor ? ' style="color:' + colorFloor + '"' : '';
 
         div.innerHTML = '<div class="card-top-line">' +
             '<span class="card-index">' + num + ' из ' + totalCount + '</span>' +
@@ -320,7 +377,7 @@ function renderList(apartmentsToRender, totalCount) {
             '<h3 class="card-title-rooms">' +
             '<span class="card-rooms"' + styleRooms + '>' + titleRooms.replace(/</g, '&lt;') + '</span>' +
             (areaStr ? '<span class="card-area"' + styleArea + '>' + areaStr.replace(/</g, '&lt;') + '</span>' : '') +
-            (floorStr ? '<span class="card-floor">' + floorStr.replace(/</g, '&lt;') + '</span>' : '') +
+            (floorStr ? '<span class="card-floor"' + styleFloor + '>' + floorStr.replace(/</g, '&lt;') + '</span>' : '') +
             (buildYear ? '<span class="card-build-year-right"' + styleYear + '>Год: ' + buildYear + '</span>' : '') +
             '</h3>' +
             '<div class="card-price-line">' +
