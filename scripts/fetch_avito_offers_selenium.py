@@ -261,7 +261,7 @@ def process_one(
     if not is_likely_offer_page(html) and rec_try:
         rec = rec_try
         soup = BeautifulSoup(html, "html.parser")
-        remote = collect_image_urls(soup)
+        remote = collect_image_urls(soup, html)
         rec["photos"] = []
         rec["img_src"] = ""
         if not no_images and aid and remote:
@@ -297,7 +297,7 @@ def process_one(
         return None
 
     soup = BeautifulSoup(html, "html.parser")
-    remote = collect_image_urls(soup)
+    remote = collect_image_urls(soup, html)
     rec["photos"] = []
     rec["img_src"] = ""
 

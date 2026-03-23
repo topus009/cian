@@ -135,14 +135,82 @@ def parse_area_m2(s: str) -> str | None:
     return None
 
 
-def collect_image_urls(soup: BeautifulSoup) -> list[str]:
+def _urls_from_embedded_imageurls_json(page_html: str) -> list[str]:
+    """
+    В разметке объявления Авито в <script> лежит JSON с полем urls / imageUrls:
+    для каждого фото — несколько размеров. Берём 1280x960 (макс. из типичного набора),
+    иначе объявление качается с превью 75×55 / 150×110 — нечитаемо.
+
+    В HTML кавычки экранированы: \\\"1280x960\\\":\\\"https://...
+    """
+    if not page_html or "1280x960" not in page_html:
+        return []
+    # Экранированный JSON внутри строки JS
+    pat_esc = r'\\"1280x960\\":\\"(https://.*?)(?=\\")'
+    found = re.findall(pat_esc, page_html)
+    if not found:
+        # На случай неэкранированного варианта
+        found = re.findall(
+            r'"1280x960"\s*:\s*"(https://[^"]+)"', page_html
+        )
     out: list[str] = []
-    seen = set()
+    seen: set[str] = set()
+    for u in found:
+        u = u.replace("\\/", "/").strip()
+        if u and u not in seen and "img.avito.st" in u:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+def _urls_from_extended_gallery(soup: BeautifulSoup) -> list[str]:
+    """
+    Полноэкранная галерея Авито: <img data-marker="extended-gallery/frame-img" src="…?cqp=…">
+    Тот же класс URL, что и ключ 1280x960 во встроенном JSON (~1280×960), с подписью cqp.
+    Появляется в DOM после открытия галереи; в сохранённом page_source Selenium иногда уже есть.
+    """
+    imgs = soup.select('[data-marker="extended-gallery/frame-img"][src]')
+    if not imgs:
+        return []
+
+    def sort_key(i: int, img) -> tuple[int, int]:
+        raw = img.get("data-image-id")
+        try:
+            return (int(raw), i)
+        except (TypeError, ValueError):
+            return (i, i)
+
+    ranked = sorted(enumerate(imgs), key=lambda t: sort_key(t[0], t[1]))
+    out: list[str] = []
+    seen: set[str] = set()
+    for _, img in ranked:
+        src = (img.get("src") or "").strip()
+        if not src or "img.avito.st" not in src or src in seen:
+            continue
+        seen.add(src)
+        out.append(src)
+    return out
+
+
+def collect_image_urls(soup: BeautifulSoup, page_html: str = "") -> list[str]:
+    """URL фото: JSON 1280×960 → extended-gallery/frame-img → превью в DOM."""
+    from_json = _urls_from_embedded_imageurls_json(page_html)
+    if from_json:
+        return from_json
+
+    from_gallery = _urls_from_extended_gallery(soup)
+    if from_gallery:
+        return from_gallery
+
+    out: list[str] = []
+    seen: set[str] = set()
     wrap = soup.select_one('[data-marker="image-preview/preview-wrapper"]')
     if not wrap:
         for img in soup.select('[data-marker="item-view/gallery"] img[src]'):
-            src = img.get("src") or ""
-            if src and "avito" in src and src not in seen:
+            src = (img.get("src") or "").strip()
+            if not src or "avito" not in src:
+                continue
+            if src not in seen:
                 seen.add(src)
                 out.append(src)
         return out
@@ -152,7 +220,7 @@ def collect_image_urls(soup: BeautifulSoup) -> list[str]:
         img = li.find("img", src=True)
         if not img:
             continue
-        src = (img.get("src") or "").split("?")[0]
+        src = (img.get("src") or "").strip()
         if not src or src in seen:
             continue
         seen.add(src)
