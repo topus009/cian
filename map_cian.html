@@ -66,6 +66,16 @@
                 <label class="rooms-filter-item"><input type="checkbox" data-rooms="0" checked><span>?</span></label>
             </div>
         </div>
+        <div class="copy-rating-toolbar" role="group" aria-label="Копировать ID в hidden_ids по оценке">
+            <span class="copy-rating-label">Копировать ID (оценка) → буфер:</span>
+            <div class="copy-rating-btns">
+                <button type="button" class="copy-rating-btn copy-rating-btn-green" id="copy-rating-3" title="Отлично — ID Циан и Авито для NEWLY_HIDDEN_IDS">👍</button>
+                <button type="button" class="copy-rating-btn copy-rating-btn-yellow" id="copy-rating-2" title="Хорошо">😐</button>
+                <button type="button" class="copy-rating-btn copy-rating-btn-red" id="copy-rating-1" title="Плохо">👎</button>
+                <button type="button" class="copy-rating-btn copy-rating-btn-closed" id="copy-rating-4" title="Дорога закрыта">🚫</button>
+            </div>
+            <span class="copy-rating-feedback" id="copy-rating-feedback" aria-live="polite"></span>
+        </div>
         </div>
         <div class="list-cards" id="list-cards"></div>
     </div>
@@ -107,26 +117,45 @@
     <script src="./js/gallery.js"></script>
     <script src="./js/map.js"></script>
     <script src="./js/list.js"></script>
+    <script src="./js/copy-rating-ids.js"></script>
     <script>
         (function () {
             var full = window.APARTMENTS || [];
+            window.APARTMENTS_ALL = full.slice();
             var mode;
             try { mode = localStorage.getItem('cian_visibility_mode') || 'visible'; } catch (e) { mode = 'visible'; }
-            /** Скрытие по списку — только объявления Циан (ID из sale/flat/…). Авито не режем. */
+            /** Скрытие по списку: Циан (sale/flat/id) и Авито (avito_id / хвост URL …_id). */
             function getCianFlatId(a) {
                 var u = a.url || '';
                 if (u.indexOf('cian.ru') === -1) return null;
                 var m = u.match(/sale\/flat\/(\d+)/);
                 return m ? m[1] : null;
             }
+            function getAvitoItemId(a) {
+                if (a.avito_id != null && a.avito_id !== '') return String(a.avito_id);
+                var u = a.url || '';
+                if (u.indexOf('avito.') === -1 && a.source !== 'avito') return null;
+                var m = u.match(/_(\d+)(?:\?.*)?$/);
+                return m ? m[1] : null;
+            }
+            function makeHiddenSet(ids) {
+                var s = {};
+                (ids || []).forEach(function (x) {
+                    s[String(x)] = true;
+                });
+                return s;
+            }
             var hiddenFull = window.APARTMENT_HIDDEN_IDS || [];
             var hiddenBase = window.APARTMENT_HIDDEN_IDS_BASE || [];
             var idsToHide = mode === 'all' ? [] : (mode === 'visible_plus_newly' ? hiddenBase : hiddenFull);
+            var hideSet = makeHiddenSet(idsToHide);
             window.APARTMENTS = idsToHide.length
                 ? full.filter(function (a) {
-                    var id = getCianFlatId(a);
-                    if (!id) return true;
-                    return idsToHide.indexOf(id) === -1;
+                    var cid = getCianFlatId(a);
+                    if (cid && hideSet[cid]) return false;
+                    var aid = getAvitoItemId(a);
+                    if (aid && hideSet[aid]) return false;
+                    return true;
                 })
                 : full;
             window.CIAN_VISIBILITY_MODE = mode;
@@ -134,6 +163,7 @@
             initMap(forMap);
             initGallery();
             initList();
+            if (typeof initCopyRatingIdsToolbar === 'function') initCopyRatingIdsToolbar();
         })();
     </script>
 </body>

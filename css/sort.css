@@ -81,6 +81,56 @@
     flex-shrink: 0;
 }
 
+/* Копирование ID по оценке → hidden_ids.js */
+.copy-rating-toolbar {
+    width: 100%;
+    padding: 4px 8px 6px;
+    background: #353b47;
+    border-bottom: 1px solid #4b5563;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+}
+.copy-rating-label {
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 600;
+    flex: 1 1 100%;
+    line-height: 1.2;
+}
+.copy-rating-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+.copy-rating-btn {
+    min-width: 32px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid #6b7280;
+    border-radius: 4px;
+    background: #4b5563;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+.copy-rating-btn:hover {
+    filter: brightness(1.12);
+}
+.copy-rating-btn-green { border-color: #28a745; background: rgba(40, 167, 69, 0.25); }
+.copy-rating-btn-yellow { border-color: #ffc107; background: rgba(255, 193, 7, 0.2); }
+.copy-rating-btn-red { border-color: #dc3545; background: rgba(220, 53, 69, 0.2); }
+.copy-rating-btn-closed { border-color: #9ca3af; background: rgba(156, 163, 175, 0.2); }
+.copy-rating-feedback {
+    font-size: 10px;
+    color: #86efac;
+    flex: 1 1 auto;
+    min-width: 120px;
+    line-height: 1.2;
+}
+
 @media (max-width: 700px) {
     .list-top-row {
         flex-wrap: wrap;

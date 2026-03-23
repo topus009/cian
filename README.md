@@ -22,7 +22,9 @@ python scripts/fetch_avito_offers_selenium.py --workers 3 --headless
 python scripts/create_map_cian.py
 ```
 
-Режим «Только видимые» / `hidden_ids.js` действует **только на Циан**; Авито этим списком не режется.
+Режим «Только видимые» / `hidden_ids.js`: в списке **и Циан** (число из `sale/flat/…`), **и Авито** (id объявления — как в данных, хвост ссылки `…_123456789`).
+
+На карте (`map_cian.html`) под фильтром комнат — четыре кнопки **👍 😐 👎 🚫**: копируют в буфер **формат для `NEWLY_HIDDEN_IDS`** — `'id','id',` для Циан и Авито сразу (оценки в `localStorage`).
 
 Парсинг HTML живёт в `scripts/avito_offer_parse.py` (используется только Selenium-скриптом).
 
