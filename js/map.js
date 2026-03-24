@@ -120,6 +120,20 @@ function syncMapMarkerOutlines() {
 }
 window.syncMapMarkerOutlines = syncMapMarkerOutlines;
 
+/**
+ * Полная перерисовка маркеров квартир с актуальным getRating() (после переключения предустановок и т.п.).
+ */
+function refreshMapMarkersForCurrentFilter() {
+    if (!map) return;
+    var pool = window.APARTMENTS || [];
+    var apartments =
+        typeof filterApartmentsByRooms === 'function'
+            ? filterApartmentsByRooms(pool)
+            : pool;
+    setMapApartmentMarkers(apartments);
+}
+window.refreshMapMarkersForCurrentFilter = refreshMapMarkersForCurrentFilter;
+
 /** Перерисовать маркеры квартир (без метро). Вызывается при смене фильтра по комнатам. */
 function setMapApartmentMarkers(apartments) {
     if (!map) return;
@@ -221,6 +235,36 @@ function initMap(apartments) {
         }
     });
     new VisibilitySelect().addTo(map);
+
+    const PresetRatingsToggle = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function () {
+            const wrap = L.DomUtil.create('div', 'leaflet-bar preset-ratings-wrap');
+            const label = L.DomUtil.create('label', 'preset-ratings-label', wrap);
+            const cb = L.DomUtil.create('input', '', label);
+            cb.type = 'checkbox';
+            cb.id = 'cian-preset-ratings-cb';
+            cb.title = 'Показывать заранее выставленные оценки (6 приоритетных — отлично, остальные в списке — хорошо). Снимите, чтобы видеть только свои оценки из браузера.';
+            cb.checked = typeof getPresetRatingsEnabled === 'function' ? getPresetRatingsEnabled() : true;
+            const heart = L.DomUtil.create('span', 'preset-ratings-heart', label);
+            heart.setAttribute('aria-hidden', 'true');
+            heart.textContent = '❤';
+            const span = L.DomUtil.create('span', 'preset-ratings-text', label);
+            span.textContent = ' Мои оценки';
+            L.DomEvent.disableClickPropagation(wrap);
+            L.DomEvent.disableScrollPropagation(wrap);
+            cb.addEventListener('change', function () {
+                if (typeof setPresetRatingsEnabled === 'function') {
+                    setPresetRatingsEnabled(cb.checked);
+                }
+                if (typeof refreshRatingsAfterPresetToggle === 'function') {
+                    refreshRatingsAfterPresetToggle();
+                }
+            });
+            return wrap;
+        }
+    });
+    new PresetRatingsToggle().addTo(map);
 
     setMapApartmentMarkers(apartments);
 

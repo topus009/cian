@@ -574,28 +574,39 @@ function renderList(apartmentsToRender, totalCount) {
                 const currentRating = getRating(apt.url);
                 const newRating = (currentRating === r) ? 0 : r;
                 setRating(apt.url, newRating);
-                div.querySelector('.rating-info').textContent = getRatingText(newRating);
-                div.querySelector('.rating-info').style.color = getRatingColor(newRating);
+                var eff = getRating(apt.url);
+                div.querySelector('.rating-info').textContent = getRatingText(eff);
+                div.querySelector('.rating-info').style.color = getRatingColor(eff);
                 div.querySelectorAll('.rating-btn').forEach(function (b) { b.classList.remove('active'); });
-                if (newRating !== 0) btn.classList.add('active');
-                div.classList.toggle('rating-closed', isRatingClosed(newRating));
+                if (eff !== 0) {
+                    div.querySelectorAll('.rating-btn').forEach(function (b) {
+                        if (parseInt(b.dataset.rating, 10) === eff) b.classList.add('active');
+                    });
+                }
+                div.classList.toggle('rating-closed', isRatingClosed(eff));
                 var sel = document.getElementById('list-sort-select');
                 if (sel && (sel.value.indexOf('rating') === 0 || sel.value.indexOf('composite') === 0)) sortApartments(sel.value);
                 else applyListFilter(window._lastSortedApartments || []);
-                updateMarkerIcon(apt, newRating);
+                updateMarkerIcon(apt, eff);
             });
         });
 
         div.addEventListener('click', function (e) {
             if (e.target.closest('.preview-wrap') || e.target.closest('.rating-btn') || e.target.closest('.btn-listing-source')) return;
-            if (rating === 4) {
+            if (getRating(apt.url) === 4) {
                 e.preventDefault();
                 setRating(apt.url, 0);
-                div.querySelector('.rating-info').textContent = getRatingText(0);
-                div.querySelector('.rating-info').style.color = getRatingColor(0);
+                var eff = getRating(apt.url);
+                div.querySelector('.rating-info').textContent = getRatingText(eff);
+                div.querySelector('.rating-info').style.color = getRatingColor(eff);
                 div.querySelectorAll('.rating-btn').forEach(function (b) { b.classList.remove('active'); });
-                div.classList.remove('rating-closed');
-                updateMarkerIcon(apt, 0);
+                if (eff !== 0) {
+                    div.querySelectorAll('.rating-btn').forEach(function (b) {
+                        if (parseInt(b.dataset.rating, 10) === eff) b.classList.add('active');
+                    });
+                }
+                div.classList.toggle('rating-closed', isRatingClosed(eff));
+                updateMarkerIcon(apt, eff);
                 var sel = document.getElementById('list-sort-select');
                 if (sel && (sel.value.indexOf('rating') === 0 || sel.value.indexOf('composite') === 0)) sortApartments(sel.value);
                 else applyListFilter(window._lastSortedApartments || []);

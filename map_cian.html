@@ -117,6 +117,7 @@
     <script src="./data/apartments.js"></script>
     <script src="./data/hidden_ids.js"></script>
     <script src="./data/metro_spb.js"></script>
+    <script src="./js/rating_presets.js"></script>
     <script src="./js/rating.js"></script>
     <script src="./js/gallery.js"></script>
     <script src="./js/map.js"></script>
@@ -125,6 +126,8 @@
     <script>
         (function () {
             var full = window.APARTMENTS || [];
+            window.RATING_PRESET_BY_URL =
+                typeof buildRatingPresetByUrl === 'function' ? buildRatingPresetByUrl(full) : {};
             window.APARTMENTS_ALL = full.slice();
             var mode;
             try { mode = localStorage.getItem('cian_visibility_mode') || 'visible'; } catch (e) { mode = 'visible'; }
