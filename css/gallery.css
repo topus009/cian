@@ -1,20 +1,20 @@
 /* Модальное окно галереи фото */
 #gallery-modal {
     display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.95); color: #fff; flex-direction: column;
+    background: var(--gallery-backdrop); color: var(--color-input-bg); flex-direction: column;
 }
 #gallery-modal.show { display: flex; }
 #gallery-modal .modal-header {
     flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 16px;
-    background: #111; border-bottom: 1px solid #333;
+    background: var(--gallery-surface); border-bottom: 1px solid var(--gallery-border);
 }
 #gallery-modal .modal-header-text { display: flex; flex-direction: column; gap: 2px; }
 #gallery-modal .modal-title { font-size: 16px; }
-#gallery-modal .modal-subtitle { font-size: 12px; color: #aaa; }
+#gallery-modal .modal-subtitle { font-size: 12px; color: var(--gallery-text-muted); }
 #gallery-modal .modal-close {
-    background: #333; color: #fff; border: none; padding: 6px 14px; cursor: pointer; border-radius: 4px; font-size: 13px;
+    background: var(--gallery-surface-elevated); color: var(--color-input-bg); border: none; padding: 6px 14px; cursor: pointer; border-radius: var(--radius-md); font-size: 13px;
 }
-#gallery-modal .modal-close:hover { background: #555; }
+#gallery-modal .modal-close:hover { background: var(--gallery-surface-hover); }
 #gallery-modal .modal-body {
     flex: 1; display: flex; min-height: 0; overflow: hidden;
 }
@@ -32,7 +32,7 @@
 #gallery-slider .slider-zone {
     position: absolute; top: 0; bottom: 0; width: 50%; z-index: 1;
     display: flex; align-items: center; justify-content: center; pointer-events: auto;
-    opacity: 0; transition: opacity 0.2s ease;
+    opacity: 0; transition: opacity var(--transition-normal) ease;
 }
 #gallery-slider .slider-zone:hover { opacity: 1; }
 #gallery-slider .slider-zone-prev { left: 0; justify-content: flex-start; padding-left: 20px; }
@@ -40,30 +40,30 @@
 #gallery-slider .slider-arrow {
     display: flex; align-items: center; justify-content: center;
     width: 80px; height: 80px; border-radius: 50%;
-    background: rgba(0,0,0,0.45); color: #fff; font-size: 42px; line-height: 1;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+    background: var(--gallery-arrow-bg); color: var(--color-input-bg); font-size: 42px; line-height: 1;
+    box-shadow: 0 2px 16px var(--gallery-arrow-shadow);
 }
 #gallery-slider .slider-zone-prev .slider-arrow::before { content: "‹"; }
 #gallery-slider .slider-zone-next .slider-arrow::before { content: "›"; }
 #gallery-slider .slider-nav {
     flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 8px 12px;
-    background: #111; border-top: 1px solid #333;
+    background: var(--gallery-surface); border-top: 1px solid var(--gallery-border);
 }
 #gallery-slider .slider-nav-left {
     flex: 1; display: flex; justify-content: center; gap: 10px; align-items: center;
 }
 #gallery-slider .slider-nav .modal-link-footer { margin-left: auto; }
 #gallery-slider .slider-nav button {
-    background: #333; color: #fff; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; font-size: 12px;
+    background: var(--gallery-surface-elevated); color: var(--color-input-bg); border: none; padding: 8px 16px; cursor: pointer; border-radius: var(--radius-md); font-size: 12px;
 }
-#gallery-slider .slider-counter { font-size: 12px; color: #aaa; }
+#gallery-slider .slider-counter { font-size: 12px; color: var(--gallery-text-muted); }
 #gallery-modal .modal-link.modal-link-footer {
-    flex-shrink: 0; padding: 6px 12px; background: #0468FF; color: #fff; text-decoration: none; border-radius: 4px; font-size: 12px;
+    flex-shrink: 0; padding: 6px 12px; background: var(--color-accent-cian); color: var(--color-input-bg); text-decoration: none; border-radius: var(--radius-md); font-size: 12px;
 }
-#gallery-modal .modal-link.modal-link-footer:hover { background: #0356d0; color: #fff; }
+#gallery-modal .modal-link.modal-link-footer:hover { background: var(--color-accent-cian-hover); color: var(--color-input-bg); }
 #gallery-modal .modal-link.modal-link-footer.modal-link-avito {
-    background: #198754;
+    background: var(--color-accent-avito);
 }
 #gallery-modal .modal-link.modal-link-footer.modal-link-avito:hover {
-    background: #157347;
+    background: var(--color-accent-avito-hover);
 }

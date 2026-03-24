@@ -1,5 +1,6 @@
 /* Сводный файл: подключает все модули (для обратной совместимости).
-   В map_cian.html подключены отдельные файлы: base, cards, rating, sort, markers, gallery. */
+   В map_cian.html подключены отдельные файлы: tokens, base, cards, … */
+@import url('tokens.css');
 @import url('base.css');
 @import url('cards.css');
 @import url('rating.css');

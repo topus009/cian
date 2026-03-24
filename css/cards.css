@@ -1,18 +1,18 @@
 /* Карточки квартир — тёмные на светлом фоне ленты */
 .apartment {
-    border: 1px solid #2d2d2d;
+    border: 1px solid var(--color-card-border);
     padding: 6px 7px;
     cursor: pointer;
-    background: #161616;
+    background: var(--color-card-bg);
     margin: 3px 5px;
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     position: relative;
-    color: #e5e7eb;
+    color: var(--color-card-body);
 }
 .apartment .card-index {
     display: inline-block;
     font-size: 10px;
-    color: #a1a1aa;
+    color: var(--color-card-meta);
     margin: 0;
     font-weight: 600;
     line-height: 1.25;
@@ -27,23 +27,23 @@
 }
 .apartment .card-apt-id {
     font-size: 10px;
-    color: #a1a1aa;
+    color: var(--color-card-meta);
     font-family: monospace;
     line-height: 1.25;
 }
-.apartment:hover { background: #1f1f1f; }
+.apartment:hover { background: var(--color-card-hover); }
 .apartment.highlighted {
-    background: #252010;
-    border: 2px solid #eab308;
-    box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.35);
+    background: var(--color-card-highlight-bg);
+    border: 2px solid var(--color-card-highlight-border);
+    box-shadow: 0 0 0 1px var(--color-card-highlight-glow);
 }
 /* Превью: чёрный фон под contain — без серых полос по бокам */
 .apartment .preview-wrap {
     position: relative;
     margin-bottom: 2px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
-    background: #000000;
+    background: var(--color-preview-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -63,12 +63,12 @@
     left: 0;
     right: 0;
     padding: 3px;
-    background: rgba(0, 0, 0, 0.72);
-    color: #fff;
+    background: var(--color-preview-overlay);
+    color: var(--color-input-bg);
     font-size: 10px;
     text-align: center;
 }
-.apartment h3 { margin: 0 0 2px 0; font-size: 13px; line-height: 1.2; color: #f4f4f5; }
+.apartment h3 { margin: 0 0 2px 0; font-size: 13px; line-height: 1.2; color: var(--color-card-title); }
 .apartment .card-title-rooms {
     margin: 0 0 2px 0;
     font-size: 13px;
@@ -77,10 +77,10 @@
     align-items: baseline;
     flex-wrap: wrap;
     gap: 0 5px;
-    color: #f4f4f5;
+    color: var(--color-card-title);
 }
 .apartment .card-build-year-right { display: none; }
-.apartment .price { font-weight: bold; color: #7cb6ff; font-size: 14px; }
+.apartment .price { font-weight: bold; color: var(--color-card-price); font-size: 14px; }
 .apartment .card-price-line {
     margin-bottom: 2px;
     display: flex;
@@ -90,28 +90,28 @@
 }
 .apartment .card-price-line .build-year {
     margin-left: 6px;
-    color: #cbd5e1;
+    color: var(--color-card-secondary);
     font-size: 11px;
     font-weight: normal;
 }
 .apartment .card-price-line .card-price-per-sqm {
     margin-left: 6px;
     font-size: 11px;
-    color: #cbd5e1;
+    color: var(--color-card-secondary);
 }
 .apartment .card-price-per-sqm {
     margin: 0 0 2px 0;
     font-size: 11px;
-    color: #cbd5e1;
+    color: var(--color-card-secondary);
 }
 .apartment .address {
-    color: #ffffff;
+    color: var(--color-card-address);
     font-size: 10px;
     margin: 0 0 2px 0;
     line-height: 1.25;
 }
-.apartment .build-year { color: #cbd5e1; font-size: 10px; margin: 0; }
-.apartment .metro { color: #94a3b8; font-size: 9px; margin-top: 1px; }
+.apartment .build-year { color: var(--color-card-secondary); font-size: 10px; margin: 0; }
+.apartment .metro { color: var(--color-card-metro); font-size: 9px; margin-top: 1px; }
 .apartment .card-rooms,
 .apartment .card-area { font-weight: inherit; }
 
@@ -141,7 +141,7 @@
         flex-direction: column;
         min-height: 100px;
         justify-content: center;
-        background: #000000;
+        background: var(--color-preview-bg);
     }
     .apartment .preview-wrap img {
         flex: 1;
@@ -177,7 +177,7 @@
         font-size: 9px;
         margin: 0;
         line-height: 1.25;
-        color: #ffffff;
+        color: var(--color-card-address);
     }
     .apartment .card-rating-row {
         grid-column: 1;
@@ -192,7 +192,7 @@
         display: inline-block;
         margin-left: auto;
         font-size: 9px;
-        color: #cbd5e1;
+        color: var(--color-card-secondary);
         font-weight: normal;
     }
     .apartment .card-price-line .build-year { display: none; }

@@ -1,8 +1,8 @@
 /* Панель сортировки — как раньше, тёмно-серый сайдбар */
 .sort-controls {
     padding: 4px 6px 5px;
-    background: #4b5563;
-    border-bottom: 1px solid #4b5563;
+    background: var(--color-chrome-panel);
+    border-bottom: 1px solid var(--color-chrome-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -10,37 +10,37 @@
 }
 .sort-label {
     font-size: 11px;
-    color: #e5e7eb;
+    color: var(--color-sidebar-label);
     font-weight: 600;
 }
 .sort-select {
     flex: 1;
     min-width: 120px;
     padding: 4px 8px;
-    border: 1px solid #6b7280;
-    border-radius: 3px;
+    border: 1px solid var(--color-chrome-border-input);
+    border-radius: var(--radius-sm);
     font-size: 12px;
-    background: #374151;
-    color: #f3f4f6;
+    background: var(--color-chrome-bg);
+    color: var(--color-sidebar-text);
     cursor: pointer;
 }
 .sort-select:focus {
     outline: none;
-    border-color: #60a5fa;
+    border-color: var(--color-focus-ring);
 }
 .sort-select option {
-    background: #374151;
-    color: #f3f4f6;
+    background: var(--color-chrome-bg);
+    color: var(--color-sidebar-text);
 }
-.sort-btn { padding: 6px 12px; margin-right: 0; border: 1px solid #dee2e6; background: #fff; cursor: pointer; border-radius: 4px; }
-.sort-btn.active { background: #0468FF; color: white; border-color: #0468FF; }
+.sort-btn { padding: 6px 12px; margin-right: 0; border: 1px solid var(--color-sort-btn-border); background: var(--color-map-panel-bg); cursor: pointer; border-radius: var(--radius-md); }
+.sort-btn.active { background: var(--color-accent-cian); color: var(--color-input-bg); border-color: var(--color-accent-cian); }
 
 /* Компактные фильтры: комнаты + оценка */
 .sidebar-filters-compact {
     width: 100%;
     padding: 2px 5px 3px;
-    background: #3d4451;
-    border-bottom: 1px solid #4b5563;
+    background: var(--color-chrome-panel-deep);
+    border-bottom: 1px solid var(--color-chrome-border);
     display: flex;
     flex-direction: column;
     gap: 1px;
@@ -57,7 +57,7 @@
     width: 14px;
     font-size: 9px;
     font-weight: 800;
-    color: #9ca3af;
+    color: var(--color-sidebar-muted);
     text-align: center;
     line-height: 1;
     user-select: none;
@@ -67,17 +67,17 @@
     align-items: center;
     gap: 1px;
     padding: 1px 3px 1px 2px;
-    border-radius: 3px;
-    border: 1px solid #5b6474;
-    background: #4b5563;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-filter-chip-border);
+    background: var(--color-chrome-panel);
     font-size: 10px;
-    color: #f3f4f6;
+    color: var(--color-sidebar-text);
     cursor: pointer;
     user-select: none;
     line-height: 1.15;
 }
 .filter-chip:hover {
-    border-color: #94a3b8;
+    border-color: var(--color-card-metro);
 }
 .filter-chip input {
     width: 11px;
@@ -85,7 +85,7 @@
     margin: 0;
     padding: 0;
     cursor: pointer;
-    accent-color: #60a5fa;
+    accent-color: var(--color-focus-ring);
     flex-shrink: 0;
 }
 .filter-chip span:not(.filter-chip-emoji) {
@@ -101,14 +101,14 @@
 .filter-chip-yellow { border-color: rgba(255, 193, 7, 0.55); }
 .filter-chip-red { border-color: rgba(220, 53, 69, 0.55); }
 .filter-chip-closed { border-color: rgba(156, 163, 175, 0.65); }
-.filter-chip-none { border-color: #6b7280; font-size: 9px; }
+.filter-chip-none { border-color: var(--color-chrome-border-input); font-size: 9px; }
 
 /* Копирование ID по оценке → hidden_ids.js */
 .copy-rating-toolbar {
     width: 100%;
     padding: 2px 5px 3px;
-    background: #353b47;
-    border-bottom: 1px solid #4b5563;
+    background: var(--color-chrome-toolbar);
+    border-bottom: 1px solid var(--color-chrome-border);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -116,7 +116,7 @@
 }
 .copy-rating-label {
     font-size: 9px;
-    color: #9ca3af;
+    color: var(--color-sidebar-muted);
     font-weight: 600;
     flex: 0 0 auto;
     line-height: 1.2;
@@ -131,9 +131,9 @@
     min-width: 28px;
     height: 24px;
     padding: 0 4px;
-    border: 1px solid #6b7280;
-    border-radius: 4px;
-    background: #4b5563;
+    border: 1px solid var(--color-chrome-border-input);
+    border-radius: var(--radius-md);
+    background: var(--color-chrome-panel);
     cursor: pointer;
     font-size: 13px;
     line-height: 1;
@@ -141,13 +141,13 @@
 .copy-rating-btn:hover {
     filter: brightness(1.12);
 }
-.copy-rating-btn-green { border-color: #28a745; background: rgba(40, 167, 69, 0.25); }
-.copy-rating-btn-yellow { border-color: #ffc107; background: rgba(255, 193, 7, 0.2); }
-.copy-rating-btn-red { border-color: #dc3545; background: rgba(220, 53, 69, 0.2); }
-.copy-rating-btn-closed { border-color: #9ca3af; background: rgba(156, 163, 175, 0.2); }
+.copy-rating-btn-green { border-color: var(--rating-green-border); background: rgba(40, 167, 69, 0.25); }
+.copy-rating-btn-yellow { border-color: var(--rating-yellow-border); background: rgba(255, 193, 7, 0.2); }
+.copy-rating-btn-red { border-color: var(--rating-red-border); background: rgba(220, 53, 69, 0.2); }
+.copy-rating-btn-closed { border-color: var(--rating-closed-active); background: rgba(156, 163, 175, 0.2); }
 .copy-rating-feedback {
     font-size: 9px;
-    color: #86efac;
+    color: var(--color-success-hint);
     flex: 1 1 auto;
     min-width: 80px;
     line-height: 1.2;
@@ -161,7 +161,7 @@
         flex: 1 1 100%;
         width: 100%;
         order: 3;
-        border-top: 1px solid #4b5563;
+        border-top: 1px solid var(--color-chrome-border);
         padding: 2px 4px 3px;
     }
     .filter-line {

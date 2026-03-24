@@ -9,7 +9,7 @@
 .card-rating-row .rating-buttons { margin: 0; display: flex; gap: 4px; }
 .rating-btn {
     padding: 2px 7px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-size: 11px;
     border: 2px solid;
@@ -17,42 +17,42 @@
 }
 /* Рамка ярче заливки — лучше видно границу кнопки */
 .rating-btn.green {
-    background: #d4edda;
-    color: #155724;
-    border-color: #28a745;
+    background: var(--rating-green-bg);
+    color: var(--rating-green-text);
+    border-color: var(--rating-green-border);
 }
-.rating-btn.green.active { background: #28a745; color: white; border-color: #1e7e34; }
+.rating-btn.green.active { background: var(--rating-green-active); color: var(--color-input-bg); border-color: var(--rating-green-active-border); }
 .rating-btn.yellow {
-    background: #fff3cd;
-    color: #856404;
-    border-color: #e0a800;
+    background: var(--rating-yellow-bg);
+    color: var(--rating-yellow-text);
+    border-color: var(--rating-yellow-border);
 }
-.rating-btn.yellow.active { background: #ffc107; color: #212529; border-color: #d39e00; }
+.rating-btn.yellow.active { background: var(--rating-yellow-active); color: var(--rating-yellow-active-text); border-color: var(--rating-yellow-active-border); }
 .rating-btn.red {
-    background: #f8d7da;
-    color: #721c24;
-    border-color: #dc3545;
+    background: var(--rating-red-bg);
+    color: var(--rating-red-text);
+    border-color: var(--rating-red-border);
 }
-.rating-btn.red.active { background: #dc3545; color: white; border-color: #bd2130; }
+.rating-btn.red.active { background: var(--rating-red-border); color: var(--color-input-bg); border-color: var(--rating-red-active-border); }
 .rating-btn.closed {
-    background: #e5e7eb;
-    color: #6b7280;
-    border-color: #6c757d;
+    background: var(--rating-closed-bg);
+    color: var(--rating-closed-text);
+    border-color: var(--rating-closed-border);
 }
-.rating-btn.closed.active { background: #9ca3af; color: #fff; border-color: #495057; }
-.card-rating-row .rating-info { font-size: 11px; color: #94a3b8; margin-left: 4px; }
+.rating-btn.closed.active { background: var(--rating-closed-active); color: var(--color-input-bg); border-color: var(--rating-closed-active-border); }
+.card-rating-row .rating-info { font-size: 11px; color: var(--color-card-metro); margin-left: 4px; }
 .card-rating-row .btn-cian-card {
     margin-left: auto;
-    flex-shrink: 0; font-size: 11px; padding: 3px 8px; color: #fff; background: #0468FF;
-    text-decoration: none; border-radius: 4px; white-space: nowrap;
+    flex-shrink: 0; font-size: 11px; padding: 3px 8px; color: var(--color-input-bg); background: var(--color-accent-cian);
+    text-decoration: none; border-radius: var(--radius-md); white-space: nowrap;
 }
-.btn-cian-card:hover { background: #0356d0; color: #fff; }
+.btn-cian-card:hover { background: var(--color-accent-cian-hover); color: var(--color-input-bg); }
 .card-rating-row .btn-avito-card {
-    background: #198754;
+    background: var(--color-accent-avito);
 }
 .card-rating-row .btn-avito-card:hover {
-    background: #157347;
-    color: #fff;
+    background: var(--color-accent-avito-hover);
+    color: var(--color-input-bg);
 }
 .apartment.rating-closed { filter: blur(2px); opacity: 0.72; }
 .apartment.rating-closed:hover { filter: blur(1px); opacity: 0.85; }

@@ -1,8 +1,8 @@
 /* Маркеры на карте Leaflet: Циан — круг, Авито — квадрат (удобнее для цифры комнат) */
 .custom-marker { background: transparent; border: none; }
-.custom-marker .marker-apt-inner { transition: transform 0.2s; user-select: none; box-sizing: border-box; }
+.custom-marker .marker-apt-inner { transition: transform var(--transition-normal); user-select: none; box-sizing: border-box; }
 .custom-marker .marker-apt-inner:hover { transform: scale(1.12); }
-.custom-marker.marker-avito .marker-apt-inner { border-radius: 5px !important; }
+.custom-marker.marker-avito .marker-apt-inner { border-radius: var(--radius-lg) !important; }
 
 /* Станции метро — маленькие кружки по цвету линии */
 .metro-marker { background: transparent; border: none; }
@@ -11,26 +11,26 @@
   height: 8px;
   border-radius: 50%;
   border: 1.5px solid;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  transition: transform 0.15s;
+  box-shadow: 0 1px 2px var(--color-map-shadow);
+  transition: transform var(--transition-fast);
 }
 .metro-marker-dot:hover { transform: scale(1.4); }
 
 /* Селект выбора тайл-слоя карты */
 .layer-select-wrap {
-  background: #fff;
-  border-radius: 4px;
+  background: var(--color-map-panel-bg);
+  border-radius: var(--radius-md);
   padding: 0;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+  box-shadow: 0 1px 5px var(--color-map-shadow);
 }
 .layer-select {
   font-size: 12px;
   padding: 4px 6px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   outline: none;
   cursor: pointer;
-  background: #fff;
+  background: var(--color-map-panel-bg);
 }
 .visibility-select-wrap {
   margin-top: 6px;
@@ -39,9 +39,9 @@
 /* Чекбокс «Мои оценки» (предустановки для гостей) */
 .preset-ratings-wrap {
   margin-top: 6px;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+  background: var(--color-map-panel-bg);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 5px var(--color-map-shadow);
   padding: 0;
 }
 .preset-ratings-label {
@@ -54,7 +54,7 @@
   line-height: 1.2;
   cursor: pointer;
   user-select: none;
-  color: #374151;
+  color: var(--color-map-panel-text);
   white-space: nowrap;
 }
 .preset-ratings-label input {
@@ -63,7 +63,7 @@
   cursor: pointer;
 }
 .preset-ratings-heart {
-  color: #e11d48;
+  color: var(--color-preset-heart);
   font-size: 13px;
   line-height: 1;
 }

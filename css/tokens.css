@@ -1,0 +1,108 @@
+/**
+ * Общие CSS-переменные: цвета хрома сайдбара, акценты Циан/Авито, карточки, радиусы.
+ * Подключать первым, до остальных css/*.css
+ */
+:root {
+    /* ——— Layout ——— */
+    --sidebar-width: 380px;
+    --bp-mobile: 700px;
+
+    /* ——— Хром сайдбара (slate) ——— */
+    --color-chrome-bg: #374151;
+    --color-chrome-panel: #4b5563;
+    --color-chrome-panel-deep: #3d4451;
+    --color-chrome-toolbar: #353b47;
+    --color-chrome-border: #4b5563;
+    --color-chrome-border-input: #6b7280;
+    /* Граница чипов фильтра (комнаты / оценка) — чуть светлее панели */
+    --color-filter-chip-border: #5b6474;
+
+    /* ——— Текст на тёмном сайдбаре ——— */
+    --color-sidebar-text: #f3f4f6;
+    --color-sidebar-muted: #9ca3af;
+    --color-sidebar-label: #e5e7eb;
+
+    /* ——— Поля ввода на светлом фоне (поиск) ——— */
+    --color-input-border: #ced4da;
+    --color-input-bg: #ffffff;
+    --color-input-text: #111827;
+    --color-input-placeholder-muted: #666666;
+    --color-input-hover-bg: #f0f4f8;
+    --color-input-hover-text: #333333;
+
+    /* ——— Акценты и фокус ——— */
+    --color-accent-cian: #0468ff;
+    --color-accent-cian-hover: #0356d0;
+    --color-accent-avito: #198754;
+    --color-accent-avito-hover: #157347;
+    --color-focus-ring: #60a5fa;
+
+    /* ——— Карточки (тёмные) ——— */
+    --color-card-bg: #161616;
+    --color-card-border: #2d2d2d;
+    --color-card-hover: #1f1f1f;
+    --color-card-highlight-bg: #252010;
+    --color-card-highlight-border: #eab308;
+    --color-card-highlight-glow: rgba(234, 179, 8, 0.35);
+    --color-card-title: #f4f4f5;
+    --color-card-body: #e5e7eb;
+    --color-card-price: #7cb6ff;
+    --color-card-secondary: #cbd5e1;
+    --color-card-address: #ffffff;
+    --color-card-meta: #a1a1aa;
+    --color-card-metro: #94a3b8;
+    --color-preview-bg: #000000;
+    --color-preview-overlay: rgba(0, 0, 0, 0.72);
+
+    /* ——— Рейтинг (кнопки) ——— */
+    --rating-green-bg: #d4edda;
+    --rating-green-text: #155724;
+    --rating-green-border: #28a745;
+    --rating-green-active: #28a745;
+    --rating-green-active-border: #1e7e34;
+
+    --rating-yellow-bg: #fff3cd;
+    --rating-yellow-text: #856404;
+    --rating-yellow-border: #e0a800;
+    --rating-yellow-active: #ffc107;
+    --rating-yellow-active-text: #212529;
+    --rating-yellow-active-border: #d39e00;
+
+    --rating-red-bg: #f8d7da;
+    --rating-red-text: #721c24;
+    --rating-red-border: #dc3545;
+    --rating-red-active-border: #bd2130;
+
+    --rating-closed-bg: #e5e7eb;
+    --rating-closed-text: #6b7280;
+    --rating-closed-border: #6c757d;
+    --rating-closed-active: #9ca3af;
+    --rating-closed-active-border: #495057;
+
+    /* ——— Панели карты (Leaflet) / белый UI ——— */
+    --color-map-panel-bg: #ffffff;
+    --color-map-panel-text: #374151;
+    --color-map-shadow: rgba(0, 0, 0, 0.3);
+    --color-preset-heart: #e11d48;
+
+    /* ——— Галерея (модалка) ——— */
+    --gallery-backdrop: rgba(0, 0, 0, 0.95);
+    --gallery-surface: #111111;
+    --gallery-surface-elevated: #333333;
+    --gallery-surface-hover: #555555;
+    --gallery-border: #333333;
+    --gallery-text-muted: #aaaaaa;
+    --gallery-arrow-bg: rgba(0, 0, 0, 0.45);
+    --gallery-arrow-shadow: rgba(0, 0, 0, 0.4);
+
+    /* ——— Прочее ——— */
+    --color-success-hint: #86efac;
+    --color-sort-btn-border: #dee2e6;
+
+    /* ——— Радиусы и переходы ——— */
+    --radius-sm: 3px;
+    --radius-md: 4px;
+    --radius-lg: 5px;
+    --transition-fast: 0.15s;
+    --transition-normal: 0.2s;
+}
