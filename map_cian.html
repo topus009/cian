@@ -131,9 +131,11 @@
     <script src="./js/map.js"></script>
     <script src="./js/list.js"></script>
     <script src="./js/copy-rating-ids.js"></script>
+    <script src="./js/photo_order.js"></script>
     <script>
         (function () {
             var full = window.APARTMENTS || [];
+            if (typeof applyPreferredPhotoOrder === 'function') applyPreferredPhotoOrder(full);
             window.RATING_PRESET_BY_URL =
                 typeof buildRatingPresetByUrl === 'function' ? buildRatingPresetByUrl(full) : {};
             window.APARTMENTS_ALL = full.slice();
