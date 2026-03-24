@@ -10,7 +10,9 @@ function openGallery(apt, photoIndex) {
 
     document.getElementById('gallery-title').textContent = (typeof getAptId === 'function' && getAptId(apt) ? 'Код ' + getAptId(apt) + ' — ' : '') + (apt.title || '');
     const area = apt.total_area ? apt.total_area + ' м²' : '';
-    const price = apt.price || '';
+    const price = typeof window.formatApartmentPriceDisplay === 'function'
+        ? window.formatApartmentPriceDisplay(apt)
+        : (apt.price || '');
     const year = (typeof getBuildYear === 'function' ? getBuildYear(apt) : (apt.build_year || ''));
     const yearStr = year ? year + ' г.' : '';
     const parts = [area, price, yearStr].filter(Boolean);

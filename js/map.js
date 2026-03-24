@@ -159,7 +159,9 @@ function setMapApartmentMarkers(apartments) {
         const aptId = (apt.url || '').match(/\/(\d+)\/?$/);
         const code = aptId ? aptId[1] : '';
         const area = apt.total_area ? apt.total_area + ' м²' : '';
-        const price = (apt.price || '').replace(/</g, '&lt;');
+        const price = (typeof window.formatApartmentPriceDisplay === 'function'
+            ? window.formatApartmentPriceDisplay(apt)
+            : (apt.price || '')).replace(/</g, '&lt;');
         const parts = [code ? 'Код ' + code : '', area, price].filter(Boolean);
         marker.bindPopup(parts.join(' · '));
         marker.on('click', function () {

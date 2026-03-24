@@ -130,7 +130,9 @@ function getCardSearchText(apt) {
     const aptId = getAptId(apt);
     const floor = apt.floor || '';
     var srcTag = apt.source === 'avito' ? 'авито' : 'циан';
-    return [apt.title, apt.price, apt.address, year, area, perSqm, aptId, floor, (apt.metro || []).join(' '), srcTag].filter(Boolean).join(' ').toLowerCase();
+    var priceRub = parsePriceRubFromApt(apt);
+    var priceSearch = priceRub > 0 ? String(priceRub) + ' ' + formatApartmentPriceDisplay(apt) : (apt.price || '');
+    return [apt.title, priceSearch, apt.address, year, area, perSqm, aptId, floor, (apt.metro || []).join(' '), srcTag].filter(Boolean).join(' ').toLowerCase();
 }
 
 function formatPricePerSqm(value) {
@@ -138,6 +140,26 @@ function formatPricePerSqm(value) {
     if (isNaN(n)) return '';
     return n.toLocaleString('ru-RU') + ' ₽/м²';
 }
+
+/** Число рублей из объявления: сначала price_value, иначе цифры из строки price */
+function parsePriceRubFromApt(apt) {
+    if (!apt) return 0;
+    if (apt.price_value != null && apt.price_value !== '') {
+        var pv = Number(apt.price_value);
+        if (!isNaN(pv) && pv > 0) return Math.round(pv);
+    }
+    var p = parseInt(String(apt.price || '').replace(/\D/g, ''), 10);
+    return p > 0 ? p : 0;
+}
+
+/** Единое отображение полной цены: разряды через пробел (ru-RU), суффикс ₽ */
+function formatApartmentPriceDisplay(apt) {
+    var n = parsePriceRubFromApt(apt);
+    if (n > 0) return n.toLocaleString('ru-RU') + ' ₽';
+    return String((apt && apt.price) || '').trim();
+}
+
+window.formatApartmentPriceDisplay = formatApartmentPriceDisplay;
 
 /** Статистика по всему списку квартир для цветовой индикации (зелёный — лучше, красный — хуже) */
 function getParamStats(apartments) {
@@ -148,7 +170,7 @@ function getParamStats(apartments) {
         var a = parseFloat(String(apt.total_area || '').replace(',', '.'), 10);
         if (!isNaN(a) && a > 0) areas.push(a);
         rooms.push(getRoomsCount(apt));
-        var p = parseInt((apt.price || '').replace(/\D/g, ''), 10);
+        var p = parsePriceRubFromApt(apt);
         if (p > 0) prices.push(p);
         if (apt.price_per_sqm != null && apt.price_per_sqm > 0) perSqm.push(Number(apt.price_per_sqm));
         var fi = getFloorIdealScore(apt);
@@ -225,7 +247,7 @@ function getCompositeScore(apt, stats) {
     stats = stats || getParamStats(window.APARTMENTS || []);
     var W = COMPOSITE_WEIGHTS;
     var parts = [];
-    var priceNum = parseInt((apt.price || '').replace(/\D/g, ''), 10) || 0;
+    var priceNum = parsePriceRubFromApt(apt);
     parts.push({ w: W.price, t: normalizeParamT(priceNum, stats.price, false) });
     parts.push({ w: W.rooms, t: normalizeParamT(getRoomsCount(apt), stats.rooms, true) });
     var areaNum = parseFloat(String(apt.total_area || '').replace(',', '.'), 10);
@@ -278,7 +300,7 @@ function getMarkerOutlineForSortField(apt, field, stats, compositeRange) {
     }
     var c = null;
     if (field === 'price') {
-        var priceNum = parseInt((apt.price || '').replace(/\D/g, ''), 10) || 0;
+        var priceNum = parsePriceRubFromApt(apt);
         c = getParamColor(priceNum, stats.price, false);
     } else if (field === 'price_per_sqm') {
         var perSqm = apt.price_per_sqm != null ? Number(apt.price_per_sqm) : null;
@@ -332,7 +354,7 @@ function sortApartments(sortValue) {
         });
     } else if (field === 'price') {
         sorted.sort(function (a, b) {
-            return num(a, b, function (x) { return parseInt((x.price || '').replace(/\D/g, ''), 10) || 0; });
+            return num(a, b, function (x) { return parsePriceRubFromApt(x); });
         });
     } else if (field === 'price_per_sqm') {
         sorted.sort(function (a, b) {
@@ -568,7 +590,7 @@ function renderList(apartmentsToRender, totalCount) {
         var buildYearNum = parseInt(getBuildYear(apt), 10);
         var areaNum = parseFloat(String(apt.total_area || '').replace(',', '.'), 10);
         var roomsNum = getRoomsCount(apt);
-        var priceNum = parseInt((apt.price || '').replace(/\D/g, ''), 10) || 0;
+        var priceNum = parsePriceRubFromApt(apt);
         var perSqmNum = apt.price_per_sqm != null ? Number(apt.price_per_sqm) : null;
 
         var colorYear = getParamColor(buildYearNum, stats.build_year, true);
@@ -621,7 +643,7 @@ function renderList(apartmentsToRender, totalCount) {
             (buildYear ? '<span class="card-build-year-right"' + styleYear + '>Год: ' + buildYear + '</span>' : '') +
             '</h3>' +
             '<div class="card-price-line">' +
-            '<span class="price"' + stylePrice + '>' + (apt.price || '').replace(/</g, '&lt;') + '</span>' +
+            '<span class="price"' + stylePrice + '>' + formatApartmentPriceDisplay(apt).replace(/</g, '&lt;') + '</span>' +
             (buildYear ? '<span class="build-year"' + styleYear + '>Год: ' + buildYear + '</span>' : '') +
             (pricePerSqm ? '<span class="card-price-per-sqm"' + stylePerSqm + '>' + pricePerSqm + '</span>' : '') +
             '</div>' +
