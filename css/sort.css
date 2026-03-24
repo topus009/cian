@@ -1,25 +1,25 @@
-/* Панель сортировки в сайдбаре */
+/* Панель сортировки — как раньше, тёмно-серый сайдбар */
 .sort-controls {
-    padding: 10px;
+    padding: 4px 6px 5px;
     background: #4b5563;
     border-bottom: 1px solid #4b5563;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 4px 6px;
 }
 .sort-label {
-    font-size: 13px;
+    font-size: 11px;
     color: #e5e7eb;
     font-weight: 600;
 }
 .sort-select {
     flex: 1;
-    min-width: 180px;
-    padding: 6px 10px;
+    min-width: 120px;
+    padding: 4px 8px;
     border: 1px solid #6b7280;
-    border-radius: 4px;
-    font-size: 13px;
+    border-radius: 3px;
+    font-size: 12px;
     background: #374151;
     color: #f3f4f6;
     cursor: pointer;
@@ -38,19 +38,19 @@
 /* Компактные фильтры: комнаты + оценка */
 .sidebar-filters-compact {
     width: 100%;
-    padding: 3px 6px 4px;
+    padding: 2px 5px 3px;
     background: #3d4451;
     border-bottom: 1px solid #4b5563;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 .filter-line {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 3px 5px;
-    min-height: 22px;
+    gap: 2px 4px;
+    min-height: 20px;
 }
 .filter-line-key {
     flex: 0 0 14px;
@@ -106,7 +106,7 @@
 /* Копирование ID по оценке → hidden_ids.js */
 .copy-rating-toolbar {
     width: 100%;
-    padding: 3px 6px 4px;
+    padding: 2px 5px 3px;
     background: #353b47;
     border-bottom: 1px solid #4b5563;
     display: flex;
@@ -146,10 +146,10 @@
 .copy-rating-btn-red { border-color: #dc3545; background: rgba(220, 53, 69, 0.2); }
 .copy-rating-btn-closed { border-color: #9ca3af; background: rgba(156, 163, 175, 0.2); }
 .copy-rating-feedback {
-    font-size: 10px;
+    font-size: 9px;
     color: #86efac;
     flex: 1 1 auto;
-    min-width: 120px;
+    min-width: 80px;
     line-height: 1.2;
 }
 
@@ -162,12 +162,36 @@
         width: 100%;
         order: 3;
         border-top: 1px solid #4b5563;
-        padding: 3px 5px;
+        padding: 2px 4px 3px;
     }
     .filter-line {
-        gap: 2px 4px;
+        gap: 2px 3px;
     }
     .copy-rating-toolbar {
         order: 4;
+    }
+}
+
+/* Мобильный сайдбар: К и О в одну строку при ширине окна ≥400px */
+@media (max-width: 700px) and (min-width: 400px) {
+    .sidebar-filters-compact {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 6px 8px;
+    }
+    .sidebar-filters-compact .filter-line {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 0;
+    }
+}
+
+/* Очень узкое окно: снова две строки К / О */
+@media (max-width: 399px) {
+    .sidebar-filters-compact {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1px;
     }
 }

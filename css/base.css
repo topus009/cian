@@ -1,39 +1,38 @@
-/* Базовый layout: карта и сайдбар */
+/* Базовый layout: карта и сайдбар (тёмно-серый хром как раньше; карточки — в cards.css) */
 * { box-sizing: border-box; }
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
 #map { height: 100vh; width: calc(100% - 380px); }
 #list {
-    width: 380px; height: 100vh; overflow: hidden;
+    width: 380px;
+    height: 100vh;
+    overflow: hidden;
     background: #374151;
     border-left: 1px solid #4b5563;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 .list-top-row {
     flex-shrink: 0;
 }
 .list-search-header {
     flex-shrink: 0;
-    padding: 10px 12px;
+    padding: 4px 6px 5px;
     background: #4b5563;
     border-bottom: 1px solid #4b5563;
 }
-.list-search-label {
-    display: block;
-    font-size: 12px;
-    color: #e5e7eb;
-    margin-bottom: 6px;
-}
 .list-search-row {
     display: flex;
-    gap: 6px;
+    gap: 3px;
     align-items: center;
 }
 .list-search-input {
     flex: 1;
-    padding: 8px 10px;
-    font-size: 14px;
+    padding: 4px 7px;
+    font-size: 12px;
     border: 1px solid #ced4da;
-    border-radius: 4px;
+    border-radius: 3px;
+    background: #fff;
+    color: #111827;
 }
 .list-search-input:focus {
     outline: none;
@@ -41,14 +40,14 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
 }
 .list-search-clear {
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: 1px solid #ced4da;
     background: #fff;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 11px;
     color: #666;
 }
 .list-search-clear:hover {
@@ -61,9 +60,10 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
 .list-cards {
     flex: 1;
     overflow-y: auto;
+    background: #374151;
 }
 
-/* Мобильная версия: сайдбар ~50%, карта видна, компактный верх */
+/* Мобильная версия: сайдбар ~50%, карта видна */
 @media (max-width: 700px) {
     body { flex-direction: column; }
     #map {
@@ -87,29 +87,26 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
     .list-top-row .list-search-header {
         flex: 1;
         min-width: 0;
-        padding: 6px 6px 6px 8px;
+        padding: 4px 5px 4px 6px;
         border-bottom: none;
         border-right: 1px solid #4b5563;
-    }
-    .list-top-row .list-search-label {
-        display: none;
     }
     .list-top-row .list-search-row {
         gap: 4px;
     }
     .list-top-row .list-search-input {
-        padding: 6px 8px;
-        font-size: 13px;
+        padding: 4px 6px;
+        font-size: 12px;
     }
     .list-top-row .list-search-clear {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
     }
     .list-top-row .sort-controls {
         flex: 1;
         min-width: 0;
-        padding: 6px 8px 6px 6px;
+        padding: 4px 6px 4px 5px;
         border-bottom: none;
     }
     .list-top-row .sort-label {
@@ -118,8 +115,8 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
     .list-top-row .sort-select {
         min-width: 0;
         width: 100%;
-        padding: 6px 8px;
-        font-size: 12px;
+        padding: 4px 6px;
+        font-size: 11px;
     }
     .list-cards {
         padding-bottom: 4px;
