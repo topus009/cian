@@ -35,85 +35,107 @@
 .sort-btn { padding: 6px 12px; margin-right: 0; border: 1px solid #dee2e6; background: #fff; cursor: pointer; border-radius: 4px; }
 .sort-btn.active { background: #0468FF; color: white; border-color: #0468FF; }
 
-/* Фильтр комнатности (чекбоксы) — компактно */
-.rooms-filter {
+/* Компактные фильтры: комнаты + оценка */
+.sidebar-filters-compact {
     width: 100%;
-    padding: 4px 8px 6px;
+    padding: 3px 6px 4px;
     background: #3d4451;
     border-bottom: 1px solid #4b5563;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 8px;
+    flex-direction: column;
+    gap: 2px;
 }
-.rooms-filter-label {
-    font-size: 11px;
-    color: #d1d5db;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-.rooms-filter-checks {
+.filter-line {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 2px 6px;
+    gap: 3px 5px;
+    min-height: 22px;
 }
-.rooms-filter-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 11px;
-    color: #e5e7eb;
-    cursor: pointer;
+.filter-line-key {
+    flex: 0 0 14px;
+    width: 14px;
+    font-size: 9px;
+    font-weight: 800;
+    color: #9ca3af;
+    text-align: center;
+    line-height: 1;
     user-select: none;
 }
-.rooms-filter-item span {
-    min-width: 1em;
-    text-align: center;
-    font-weight: 600;
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    padding: 1px 3px 1px 2px;
+    border-radius: 3px;
+    border: 1px solid #5b6474;
+    background: #4b5563;
+    font-size: 10px;
+    color: #f3f4f6;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.15;
 }
-.rooms-filter-item input {
-    width: 12px;
-    height: 12px;
+.filter-chip:hover {
+    border-color: #94a3b8;
+}
+.filter-chip input {
+    width: 11px;
+    height: 11px;
+    margin: 0;
+    padding: 0;
     cursor: pointer;
     accent-color: #60a5fa;
     flex-shrink: 0;
 }
+.filter-chip span:not(.filter-chip-emoji) {
+    font-weight: 700;
+    min-width: 0.9em;
+    text-align: center;
+}
+.filter-chip-emoji {
+    font-size: 12px;
+    line-height: 1;
+}
+.filter-chip-green { border-color: rgba(40, 167, 69, 0.55); }
+.filter-chip-yellow { border-color: rgba(255, 193, 7, 0.55); }
+.filter-chip-red { border-color: rgba(220, 53, 69, 0.55); }
+.filter-chip-closed { border-color: rgba(156, 163, 175, 0.65); }
+.filter-chip-none { border-color: #6b7280; font-size: 9px; }
 
 /* Копирование ID по оценке → hidden_ids.js */
 .copy-rating-toolbar {
     width: 100%;
-    padding: 4px 8px 6px;
+    padding: 3px 6px 4px;
     background: #353b47;
     border-bottom: 1px solid #4b5563;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px 8px;
+    gap: 4px 6px;
 }
 .copy-rating-label {
-    font-size: 10px;
+    font-size: 9px;
     color: #9ca3af;
     font-weight: 600;
-    flex: 1 1 100%;
+    flex: 0 0 auto;
     line-height: 1.2;
 }
 .copy-rating-btns {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 3px;
     align-items: center;
 }
 .copy-rating-btn {
-    min-width: 32px;
-    height: 28px;
-    padding: 0 6px;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 4px;
     border: 1px solid #6b7280;
     border-radius: 4px;
     background: #4b5563;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1;
 }
 .copy-rating-btn:hover {
@@ -135,14 +157,17 @@
     .list-top-row {
         flex-wrap: wrap;
     }
-    .rooms-filter {
+    .sidebar-filters-compact {
         flex: 1 1 100%;
         width: 100%;
         order: 3;
         border-top: 1px solid #4b5563;
-        padding: 4px 6px;
+        padding: 3px 5px;
     }
-    .rooms-filter-checks {
-        gap: 2px 5px;
+    .filter-line {
+        gap: 2px 4px;
+    }
+    .copy-rating-toolbar {
+        order: 4;
     }
 }

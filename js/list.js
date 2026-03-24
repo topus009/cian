@@ -375,7 +375,7 @@ function sortApartments(sortValue) {
         });
     }
     applyListFilter(sorted);
-    scheduleSyncMapMarkerOutlines();
+    syncMapToSidebarFilters();
 }
 
 /** Сразу после смены сортировки обновить обводку маркеров на карте (без перезагрузки страницы). */
@@ -392,6 +392,60 @@ function scheduleSyncMapMarkerOutlines() {
 }
 
 var ROOMS_FILTER_STORAGE_KEY = 'cian_rooms_visible';
+var RATING_FILTER_STORAGE_KEY = 'cian_rating_filter_visible';
+
+function getDefaultRatingFilterState() {
+    return { '0': true, '1': true, '2': true, '3': true, '4': true };
+}
+
+function getRatingFilterState() {
+    try {
+        var s = localStorage.getItem(RATING_FILTER_STORAGE_KEY);
+        if (s) {
+            var o = JSON.parse(s);
+            var def = getDefaultRatingFilterState();
+            Object.keys(def).forEach(function (k) {
+                if (typeof o[k] === 'undefined') o[k] = def[k];
+            });
+            return o;
+        }
+    } catch (e) {}
+    return getDefaultRatingFilterState();
+}
+
+function saveRatingFilterStateFromDom() {
+    var wrap = document.getElementById('rating-filter');
+    if (!wrap) return;
+    var o = {};
+    wrap.querySelectorAll('input[type="checkbox"][data-rating-filter]').forEach(function (cb) {
+        o[cb.getAttribute('data-rating-filter')] = cb.checked;
+    });
+    try {
+        localStorage.setItem(RATING_FILTER_STORAGE_KEY, JSON.stringify(o));
+    } catch (e) {}
+}
+
+function apartmentMatchesRatingFilter(apt) {
+    var r = getRating(apt.url);
+    var key = String(r);
+    return getRatingFilterState()[key] === true;
+}
+
+function filterApartmentsForMap(apartments) {
+    return (apartments || []).filter(function (apt) {
+        return apartmentMatchesRoomFilter(apt) && apartmentMatchesRatingFilter(apt);
+    });
+}
+window.filterApartmentsForMap = filterApartmentsForMap;
+
+/** Маркеры на карте по текущим фильтрам комнат + оценка (без поиска по тексту). */
+function syncMapToSidebarFilters() {
+    var pool = window.APARTMENTS || [];
+    if (typeof setMapApartmentMarkers === 'function') {
+        setMapApartmentMarkers(filterApartmentsForMap(pool));
+    }
+    scheduleSyncMapMarkerOutlines();
+}
 
 function mapAptToRoomFilterKey(apt) {
     var n = getRoomsCount(apt);
@@ -440,12 +494,11 @@ function filterApartmentsByRooms(apartments) {
     return (apartments || []).filter(apartmentMatchesRoomFilter);
 }
 
-function onRoomsFilterChanged() {
+function onSidebarFiltersChanged() {
     saveRoomFilterStateFromDom();
+    saveRatingFilterStateFromDom();
     var pool = window.APARTMENTS || [];
-    if (typeof setMapApartmentMarkers === 'function') {
-        setMapApartmentMarkers(filterApartmentsByRooms(pool));
-    }
+    syncMapToSidebarFilters();
     applyListFilter(window._lastSortedApartments || pool.slice());
 }
 
@@ -459,13 +512,31 @@ function syncRoomsFilterCheckboxesFromStorage() {
     });
 }
 
-function initRoomsFilter() {
-    var wrap = document.getElementById('rooms-filter');
+function syncRatingFilterCheckboxesFromStorage() {
+    var wrap = document.getElementById('rating-filter');
     if (!wrap) return;
-    syncRoomsFilterCheckboxesFromStorage();
-    wrap.querySelectorAll('input[type="checkbox"][data-rooms]').forEach(function (cb) {
-        cb.addEventListener('change', onRoomsFilterChanged);
+    var state = getRatingFilterState();
+    wrap.querySelectorAll('input[type="checkbox"][data-rating-filter]').forEach(function (cb) {
+        var k = cb.getAttribute('data-rating-filter');
+        cb.checked = state[k] !== false;
     });
+}
+
+function initSidebarFilters() {
+    syncRoomsFilterCheckboxesFromStorage();
+    syncRatingFilterCheckboxesFromStorage();
+    var rooms = document.getElementById('rooms-filter');
+    if (rooms) {
+        rooms.querySelectorAll('input[type="checkbox"][data-rooms]').forEach(function (cb) {
+            cb.addEventListener('change', onSidebarFiltersChanged);
+        });
+    }
+    var rating = document.getElementById('rating-filter');
+    if (rating) {
+        rating.querySelectorAll('input[type="checkbox"][data-rating-filter]').forEach(function (cb) {
+            cb.addEventListener('change', onSidebarFiltersChanged);
+        });
+    }
 }
 
 function applyListFilter(sortedApartments) {
@@ -475,6 +546,7 @@ function applyListFilter(sortedApartments) {
         ? sortedApartments.filter(function (apt) { return getCardSearchText(apt).indexOf(query) !== -1; })
         : sortedApartments.slice();
     list = list.filter(apartmentMatchesRoomFilter);
+    list = list.filter(apartmentMatchesRatingFilter);
     renderList(list, list.length);
 }
 
@@ -586,8 +658,10 @@ function renderList(apartmentsToRender, totalCount) {
                 div.classList.toggle('rating-closed', isRatingClosed(eff));
                 var sel = document.getElementById('list-sort-select');
                 if (sel && (sel.value.indexOf('rating') === 0 || sel.value.indexOf('composite') === 0)) sortApartments(sel.value);
-                else applyListFilter(window._lastSortedApartments || []);
-                updateMarkerIcon(apt, eff);
+                else {
+                    applyListFilter(window._lastSortedApartments || []);
+                    syncMapToSidebarFilters();
+                }
             });
         });
 
@@ -609,7 +683,10 @@ function renderList(apartmentsToRender, totalCount) {
                 updateMarkerIcon(apt, eff);
                 var sel = document.getElementById('list-sort-select');
                 if (sel && (sel.value.indexOf('rating') === 0 || sel.value.indexOf('composite') === 0)) sortApartments(sel.value);
-                else applyListFilter(window._lastSortedApartments || []);
+                else {
+                    applyListFilter(window._lastSortedApartments || []);
+                    syncMapToSidebarFilters();
+                }
                 return;
             }
             map.setView([apt.lat, apt.lon], 16);
@@ -653,5 +730,5 @@ function initList() {
     }
 
     sortApartments(sortSelect ? sortSelect.value : 'rating-desc');
-    initRoomsFilter();
+    initSidebarFilters();
 }

@@ -60,18 +60,26 @@
                 </optgroup>
             </select>
         </div>
-        <div class="rooms-filter" id="rooms-filter" role="group" aria-label="Фильтр по комнатности">
-            <span class="rooms-filter-label">Комнаты:</span>
-            <div class="rooms-filter-checks">
-                <label class="rooms-filter-item"><input type="checkbox" data-rooms="1" checked><span>1</span></label>
-                <label class="rooms-filter-item"><input type="checkbox" data-rooms="2" checked><span>2</span></label>
-                <label class="rooms-filter-item"><input type="checkbox" data-rooms="3" checked><span>3</span></label>
-                <label class="rooms-filter-item"><input type="checkbox" data-rooms="4" checked><span>4+</span></label>
-                <label class="rooms-filter-item"><input type="checkbox" data-rooms="0" checked><span>?</span></label>
+        <div class="sidebar-filters-compact">
+            <div class="filter-line" id="rooms-filter" role="group" aria-label="Фильтр по комнатности">
+                <span class="filter-line-key" title="Комнаты">К</span>
+                <label class="filter-chip"><input type="checkbox" data-rooms="1" checked><span>1</span></label>
+                <label class="filter-chip"><input type="checkbox" data-rooms="2" checked><span>2</span></label>
+                <label class="filter-chip"><input type="checkbox" data-rooms="3" checked><span>3</span></label>
+                <label class="filter-chip"><input type="checkbox" data-rooms="4" checked><span>4+</span></label>
+                <label class="filter-chip"><input type="checkbox" data-rooms="0" checked><span>?</span></label>
+            </div>
+            <div class="filter-line" id="rating-filter" role="group" aria-label="Фильтр по оценке">
+                <span class="filter-line-key" title="Оценки">О</span>
+                <label class="filter-chip filter-chip-green"><input type="checkbox" data-rating-filter="3" checked><span class="filter-chip-emoji" title="Отлично">👍</span></label>
+                <label class="filter-chip filter-chip-yellow"><input type="checkbox" data-rating-filter="2" checked><span class="filter-chip-emoji" title="Хорошо">😐</span></label>
+                <label class="filter-chip filter-chip-red"><input type="checkbox" data-rating-filter="1" checked><span class="filter-chip-emoji" title="Плохо">👎</span></label>
+                <label class="filter-chip filter-chip-closed"><input type="checkbox" data-rating-filter="4" checked><span class="filter-chip-emoji" title="Дорога закрыта">🚫</span></label>
+                <label class="filter-chip filter-chip-none"><input type="checkbox" data-rating-filter="0" checked><span class="filter-chip-emoji" title="Не оценено">—</span></label>
             </div>
         </div>
         <div class="copy-rating-toolbar" role="group" aria-label="Копировать ID в hidden_ids по оценке">
-            <span class="copy-rating-label">Копировать ID (оценка) → буфер:</span>
+            <span class="copy-rating-label">ID в буфер:</span>
             <div class="copy-rating-btns">
                 <button type="button" class="copy-rating-btn copy-rating-btn-green" id="copy-rating-3" title="Отлично — ID Циан и Авито для NEWLY_HIDDEN_IDS">👍</button>
                 <button type="button" class="copy-rating-btn copy-rating-btn-yellow" id="copy-rating-2" title="Хорошо">😐</button>
@@ -166,7 +174,10 @@
                 })
                 : full;
             window.CIAN_VISIBILITY_MODE = mode;
-            var forMap = filterApartmentsByRooms(window.APARTMENTS);
+            var forMap =
+                typeof filterApartmentsForMap === 'function'
+                    ? filterApartmentsForMap(window.APARTMENTS)
+                    : filterApartmentsByRooms(window.APARTMENTS);
             initMap(forMap);
             initGallery();
             initList();

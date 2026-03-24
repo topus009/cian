@@ -127,9 +127,11 @@ function refreshMapMarkersForCurrentFilter() {
     if (!map) return;
     var pool = window.APARTMENTS || [];
     var apartments =
-        typeof filterApartmentsByRooms === 'function'
-            ? filterApartmentsByRooms(pool)
-            : pool;
+        typeof filterApartmentsForMap === 'function'
+            ? filterApartmentsForMap(pool)
+            : typeof filterApartmentsByRooms === 'function'
+                ? filterApartmentsByRooms(pool)
+                : pool;
     setMapApartmentMarkers(apartments);
 }
 window.refreshMapMarkersForCurrentFilter = refreshMapMarkersForCurrentFilter;
