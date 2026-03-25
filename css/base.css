@@ -1,7 +1,8 @@
 /* Базовый layout: карта и сайдбар (тёмно-серый хром как раньше; карточки — в cards.css) */
 * { box-sizing: border-box; }
-body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
-#map { height: 100vh; width: calc(100% - var(--sidebar-width)); }
+html { height: 100%; }
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; min-height: 100vh; }
+#map { height: 100vh; width: calc(100% - var(--sidebar-width)); min-height: 0; }
 #list {
     width: var(--sidebar-width);
     height: 100vh;
@@ -24,9 +25,11 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
     display: flex;
     gap: 3px;
     align-items: center;
+    min-width: 0;
 }
 .list-search-input {
     flex: 1;
+    min-width: 0;
     padding: 4px 7px;
     font-size: 12px;
     border: 1px solid var(--color-input-border);
@@ -39,6 +42,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
     border-color: var(--color-accent-cian);
 }
 .list-search-clear {
+    flex: 0 0 auto;
     flex-shrink: 0;
     width: 24px;
     height: 24px;
@@ -63,17 +67,31 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
     background: var(--color-chrome-bg);
 }
 
-/* Мобильная версия: сайдбар ~50%, карта видна */
+/* Мобильная версия: карта и сайдбар по 50% видимой высоты, без скролла всей страницы */
 @media (max-width: 700px) {
-    body { flex-direction: column; }
+    html {
+        height: 100%;
+        height: 100dvh;
+    }
+    body {
+        flex-direction: column;
+        height: 100%;
+        height: 100dvh;
+        max-height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
     #map {
         width: 100%;
-        height: 50vh;
-        min-height: 200px;
+        flex: 1 1 50%;
+        min-height: 0;
+        height: auto;
     }
     #list {
         width: 100%;
-        height: 50vh;
+        flex: 1 1 50%;
+        min-height: 0;
+        height: auto;
         border-left: none;
         border-top: 1px solid var(--color-chrome-border);
     }
@@ -84,19 +102,23 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
         gap: 0;
         border-bottom: 1px solid var(--color-chrome-border);
     }
+    /* Поиску чуть меньше ширины, селекту — больше; input сжимается, крестик не обрезается */
     .list-top-row .list-search-header {
-        flex: 1;
+        flex: 0 1 42%;
+        max-width: 46%;
         min-width: 0;
-        padding: 4px 5px 4px 6px;
+        padding: 4px 4px 4px 5px;
         border-bottom: none;
         border-right: 1px solid var(--color-chrome-border);
     }
     .list-top-row .list-search-row {
-        gap: 4px;
+        gap: 3px;
     }
     .list-top-row .list-search-input {
-        padding: 4px 6px;
-        font-size: 12px;
+        flex: 1 1 0%;
+        min-width: 0;
+        padding: 4px 5px;
+        font-size: 11px;
     }
     .list-top-row .list-search-clear {
         width: 24px;
@@ -104,9 +126,9 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
         font-size: 11px;
     }
     .list-top-row .sort-controls {
-        flex: 1;
+        flex: 1 1 58%;
         min-width: 0;
-        padding: 4px 6px 4px 5px;
+        padding: 4px 5px 4px 4px;
         border-bottom: none;
     }
     .list-top-row .sort-label {
@@ -115,8 +137,9 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; }
     .list-top-row .sort-select {
         min-width: 0;
         width: 100%;
-        padding: 4px 6px;
-        font-size: 11px;
+        max-width: 100%;
+        padding: 4px 4px;
+        font-size: 10px;
     }
     .list-cards {
         padding-bottom: 4px;
