@@ -326,7 +326,7 @@ function getMarkerOutlineForSortField(apt, field, stats, compositeRange) {
 window.getMarkerOutlineForSortField = getMarkerOutlineForSortField;
 
 function sortApartments(sortValue) {
-    var parts = (sortValue || 'rating-desc').split('-');
+    var parts = (sortValue || 'composite-desc').split('-');
     var field = parts[0];
     var dir = parts[1] === 'asc' ? 1 : -1;
     var apartments = window.APARTMENTS || [];
@@ -751,6 +751,6 @@ function initList() {
         });
     }
 
-    sortApartments(sortSelect ? sortSelect.value : 'rating-desc');
+    sortApartments(sortSelect ? sortSelect.value : 'composite-desc');
     initSidebarFilters();
 }

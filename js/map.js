@@ -90,7 +90,7 @@ function updateMarkerIcon(apt, rating) {
     var m = markers.find(function (mr) { return mr._apt && mr._apt.url === apt.url; });
     if (!m) return;
     var sel = document.getElementById('list-sort-select');
-    var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
+    var field = (sel && sel.value ? sel.value : 'composite-desc').split('-')[0];
     var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
     var compositeRange = getCompositeRangeForMap(field, stats);
     var outline =
@@ -104,7 +104,7 @@ function updateMarkerIcon(apt, rating) {
 function syncMapMarkerOutlines() {
     if (!map) return;
     var sel = document.getElementById('list-sort-select');
-    var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
+    var field = (sel && sel.value ? sel.value : 'composite-desc').split('-')[0];
     var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
     var compositeRange = getCompositeRangeForMap(field, stats);
     markers.forEach(function (m) {
@@ -144,7 +144,7 @@ function setMapApartmentMarkers(apartments) {
     });
     markers.length = 0;
     var sel = document.getElementById('list-sort-select');
-    var field = (sel && sel.value ? sel.value : 'rating-desc').split('-')[0];
+    var field = (sel && sel.value ? sel.value : 'composite-desc').split('-')[0];
     var stats = typeof getParamStats === 'function' ? getParamStats(window.APARTMENTS || []) : null;
     var compositeRange = getCompositeRangeForMap(field, stats);
     (apartments || []).forEach(function (apt) {
@@ -177,7 +177,7 @@ function initMap(apartments) {
     map = L.map('map').setView([59.9343, 30.3351], 11);
 
     const savedName = getSavedLayer();
-    const defaultName = TILE_LAYERS[savedName] ? savedName : 'OSM Standard';
+    const defaultName = TILE_LAYERS[savedName] ? savedName : 'Dark (CartoDB)';
     let currentTile = L.tileLayer(TILE_LAYERS[defaultName].url, {
         attribution: TILE_LAYERS[defaultName].attr, maxZoom: 19
     }).addTo(map);
